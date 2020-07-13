@@ -4,10 +4,10 @@ var bodyParser = require('body-parser')
 
 app.use(bodyParser.json())
 
-app.post('/wind_speed', (req, res) => {
-  const data = req.body;
-  console.log(data);
-  res.json({"ok": true});
+app.get('/wind_speed', (req, res) => {
+  const speed = req.query.speed;
+  console.log("Wind speed: " + speed);
+  res.send("Wind speed "  + speed + " received");
 })
 
 app.listen(9876, () => {
