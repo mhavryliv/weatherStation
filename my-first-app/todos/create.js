@@ -25,7 +25,7 @@ module.exports.create = (event, context, callback) => {
       text: data.text,
       checked: false,
       createdAt: timestamp,
-      updatedAt: timestamp,
+      updatedAt: timestamp
     },
   };
 
