@@ -5,8 +5,10 @@ var bodyParser = require('body-parser')
 app.use(bodyParser.json())
 
 app.get('/wind_speed', (req, res) => {
-  const speed = req.query.speed;
+  const speed = req.query.speedkmh;
+  const times = req.query.times;
   console.log("Wind speed: " + speed);
+  console.log("Times: "+ times);
   res.send("Wind speed "  + speed + " received");
 })
 
