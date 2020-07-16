@@ -7,8 +7,9 @@ app.use(bodyParser.json())
 app.get('/wind_speed', (req, res) => {
   const speed = req.query.speedkmh;
   const times = req.query.times;
+  let timesArr = times.split(",");
   console.log("Wind speed: " + speed);
-  console.log("Times: "+ times);
+  console.log("Times: "+ timesArr);
   res.send("Wind speed "  + speed + " received");
 })
 
