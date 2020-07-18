@@ -7,7 +7,8 @@ app.use(bodyParser.json())
 
 app.post('/wind_and_water', (req, res) => {
   const data = req.body;
-  console.dir(data);
+  console.log(Date.now());
+  console.log(data);
   const samplingInterval = data.interval;
   const speedArr = data.wind_speed;
   const gustArr = data.max_gust;

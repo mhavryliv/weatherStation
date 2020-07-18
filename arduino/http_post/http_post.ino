@@ -17,7 +17,7 @@ const bool isDoingWifi = true;
 // Wifi sending interval (msec)
 const int WIFI_INTERVAL = 6000;
 int dataSetCounter = 0;
-const int inputPin = 16;
+const int windSpeedInputPin = 16;
 const int windDirInPin = A0;
 
 const int WIND_DEBOUNCE_MSEC = 20;
@@ -30,6 +30,12 @@ volatile MovAvg windSpeedAvg(5);
 const int WIND_DIR_LEN = 8;
 const float windDirOutputVals[WIND_DIR_LEN] = {0.23, 0.53, 0.85, 0.78, 0.67, 0.38, 0.04, 0.13};
 const String windDirNames[WIND_DIR_LEN] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+
+// Water
+const int waterInputPin = 17;
+const int WATER_DEBOUNCE_MSEC = 80;
+volatile unsigned long waterClickCount = 0;
+volatile unsigned long lastWaterClick = 0;
 
 // Data to send over HTTP
 const int NUM_DATA_POINTS = WIFI_INTERVAL / WIND_FRAME_SIZE;
@@ -63,6 +69,7 @@ void setup() {
   // Setup counter for tracking when to send WIFI data
   dataSetCounter = 0;
   shortestWindClickInterval = WIND_FRAME_SIZE;
+  waterClickCount = 0;
 }
 
 void loop() {
@@ -71,11 +78,13 @@ void loop() {
   calculateWindDir();
 
   // Reset data set counter if it about to rollover, and send wifi data
+  // Also clear the water counter here - don't need to update it every wind frame
   if(dataSetCounter == (NUM_DATA_POINTS - 1)) {
-    dataSetCounter = 0;
     if(isDoingWifi) {
       sendHttpReq();
     }
+    dataSetCounter = 0;
+    waterClickCount = 0;
   }
   else {
     dataSetCounter++;
@@ -152,14 +161,26 @@ void handleWindClick() {
   windSpeedAvg.addVal(diff);
 }
 
+void handleWaterClick() {
+  const unsigned long thisTime = millis();
+  const unsigned long diff = thisTime - lastWaterClick;
+  if(diff < WATER_DEBOUNCE_MSEC) {
+    return;
+  }
+  lastWaterClick = thisTime;
+  waterClickCount++;
+//  Serial.println("Water click: " + String(waterClickCount));
+}
 
 void setupData() {
   windSpeedAvg.reset();
 }
 
 void setupInputPins() {
-  pinMode(inputPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(inputPin), handleWindClick, FALLING);
+  pinMode(windSpeedInputPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(windSpeedInputPin), handleWindClick, FALLING);
+  pinMode(waterInputPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(waterInputPin), handleWaterClick, FALLING);
 }
 
 void setupWifi() {
@@ -176,14 +197,15 @@ void setupWifi() {
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-  Serial.println("Timer set to 5 seconds (timerDelay variable),"
-                 " it will take 5 seconds before publishing the first reading.");
+  Serial.println("Timer set to 6 seconds (timerDelay variable),"
+                 " it will take 6 seconds before publishing the first reading.");
 }
 
 // Creates a JSON object out of required data, and returns as serialised string.
 String createJsonDoc() {
   StaticJsonDocument<1000> doc;
   doc["interval"] = WIND_FRAME_SIZE;
+  doc["water_clicks"] = waterClickCount;
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
