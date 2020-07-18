@@ -205,7 +205,7 @@ void setupWifi() {
 String createJsonDoc() {
   StaticJsonDocument<1000> doc;
   doc["interval"] = WIND_FRAME_SIZE;
-  doc["water_clicks"] = waterClickCount;
+  doc["water_mm"] = waterClickCount * 0.2794;
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
