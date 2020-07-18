@@ -2,15 +2,21 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser')
 
+// app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
-app.get('/wind_speed', (req, res) => {
-  const speed = req.query.speedkmh;
-  const times = req.query.times;
-  let timesArr = times.split(",");
-  console.log("Wind speed: " + speed);
-  console.log("Times: "+ timesArr);
-  res.send("Wind speed "  + speed + " received");
+app.post('/wind_and_water', (req, res) => {
+  const data = req.body;
+  console.dir(data);
+  const samplingInterval = data.interval;
+  const speedArr = data.wind_speed;
+  const gustArr = data.max_gust;
+  const dirArr = data.wind_dir;
+  
+  console.log("Wind speed: " + speedArr);
+  console.log("Gusts: " + gustArr);
+  console.log("Direction: "+ dirArr);
+  res.send("ok");
 })
 
 app.listen(9876, () => {

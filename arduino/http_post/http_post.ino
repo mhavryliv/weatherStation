@@ -4,26 +4,27 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+// Simple moving average class
+#include "movavg.h"
 
 const char* ssid = "feeb";
 const char* password = "unisux12";
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.86.121:9876/wind_speed";
+String serverName = "http://192.168.86.121:9876/wind_and_water";
 
 const bool isDoingWifi = true;
 // Wifi sending interval (msec)
-const int WIFI_INTERVAL = 5000;
+const int WIFI_INTERVAL = 6000;
 int dataSetCounter = 0;
 const int inputPin = 16;
 const int windDirInPin = A0;
 
 const int WIND_DEBOUNCE_MSEC = 20;
-const int WIND_FRAME_SIZE = 1000;
-const int MAX_DATA = WIND_FRAME_SIZE  ;
-volatile unsigned long periodStartMsec;
-volatile unsigned long windClicks[MAX_DATA];
-volatile int windClickCount;
+const int WIND_FRAME_SIZE = 2000; // set this to 3 seconds to allow for very slow wind ( < 1kmh )
+volatile unsigned long lastWindClick;
+volatile unsigned long shortestWindClickInterval;
+volatile MovAvg windSpeedAvg(5);
 
 // The normalised values output by the wind direction vane, clockwise from North
 const int WIND_DIR_LEN = 8;
@@ -61,6 +62,7 @@ void setup() {
 
   // Setup counter for tracking when to send WIFI data
   dataSetCounter = 0;
+  shortestWindClickInterval = WIND_FRAME_SIZE;
 }
 
 void loop() {
@@ -71,7 +73,6 @@ void loop() {
   // Reset data set counter if it about to rollover, and send wifi data
   if(dataSetCounter == (NUM_DATA_POINTS - 1)) {
     dataSetCounter = 0;
-    createJsonDoc();
     if(isDoingWifi) {
       sendHttpReq();
     }
@@ -81,28 +82,40 @@ void loop() {
   }
 
   // Clear wind click params for this cycle before sleeping
-  windClickCount = 0;
-  periodStartMsec = millis();
+  shortestWindClickInterval = WIND_FRAME_SIZE;
   delay(WIND_FRAME_SIZE);
 }
 
 void calculateWindSpeed() {
-  double speed = (double)windClickCount / ((double)WIND_FRAME_SIZE / 1000.0);
-  windSpeedKMh[dataSetCounter] = speed * 2.4;
-  int quickestClick = WIND_FRAME_SIZE;
-  if(windClickCount > 1) {
-    for(int i = 0; i < (windClickCount - 1); ++i) {
-      int interval = windClicks[i+1] - windClicks[i];
-      if(interval < quickestClick) {
-        quickestClick = interval;
-      }
+  // Calculate the max gust
+  const double invertedQuickestClick = 1.0/(shortestWindClickInterval / 1000.0);
+  double curMaxGust = invertedQuickestClick * 2.4;
+  if(shortestWindClickInterval == WIND_FRAME_SIZE) {
+    curMaxGust = 0;
+  }
+  maxGust[dataSetCounter] = curMaxGust;
+  
+  // If there have been no clicks for the last window size, the speed is zero.
+  double speed;
+  if((millis() - lastWindClick) > WIND_FRAME_SIZE) {
+    speed = 0; 
+  }
+  else  {
+    const double windSpeedAvgVal = windSpeedAvg.getCurAvg();
+    if(windSpeedAvgVal == 0.0) {
+      speed = 0;
     }
-    const double quickestClickSec = (double)quickestClick / 1000.0;
-    maxGust[dataSetCounter] = 2.4 * (1.0 / quickestClickSec);
+    else {
+      const double freq = 1.0/(windSpeedAvg.getCurAvg() / 1000.0);
+      speed = freq * 2.4;
+    }
   }
-  else {
-    maxGust[dataSetCounter] = 0.0;
-  }
+  // Don't let the speed be higher than the current max gust
+  // Actually, this is not a big deal. Still usefful to compare the averaged and gust speeds
+//  if(speed > curMaxGust) {
+//    speed = curMaxGust;
+//  }
+  windSpeedKMh[dataSetCounter] = speed;
 }
 
 void calculateWindDir() {
@@ -125,25 +138,23 @@ void calculateWindDir() {
 
 // Interrupt handling
 void handleWindClick() {
-  // Get the last wind click time
-  const unsigned long lastClick = (windClickCount == 0) ? 0 : windClicks[windClickCount - 1];
-  // If less than 20 msec has passed, don't count it
-  const unsigned long thisTime = millis() - periodStartMsec;
-  const unsigned long diff = thisTime - lastClick;
-  if((windClickCount != 0) && (diff < WIND_DEBOUNCE_MSEC)) {
+  // If less than 20 msec has passed since last click, don't count it
+  const unsigned long thisTime = millis();
+  const unsigned long diff = thisTime - lastWindClick;
+  if(diff < WIND_DEBOUNCE_MSEC) {
     return;
   }
-  windClicks[windClickCount] = thisTime;
-  windClickCount++;
+  lastWindClick = thisTime;
+  if(diff < shortestWindClickInterval) {
+    shortestWindClickInterval = diff;
+  }
+  // Add the diff to our moving average
+  windSpeedAvg.addVal(diff);
 }
 
 
 void setupData() {
-  // Initialise the wind click array
-  windClickCount = 0;
-  for(int i = 0; i < MAX_DATA; ++i) {
-    windClicks[i] = 0;
-  }
+  windSpeedAvg.reset();
 }
 
 void setupInputPins() {
@@ -169,7 +180,8 @@ void setupWifi() {
                  " it will take 5 seconds before publishing the first reading.");
 }
 
-void createJsonDoc() {
+// Creates a JSON object out of required data, and returns as serialised string.
+String createJsonDoc() {
   StaticJsonDocument<1000> doc;
   doc["interval"] = WIND_FRAME_SIZE;
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
@@ -181,7 +193,7 @@ void createJsonDoc() {
     maxGustArr.add(maxGust[i]);
   }
 
-  serializeJsonPretty(doc, Serial);
+  return doc.as<String>();
 }
 
 void sendHttpReq() {  
@@ -197,8 +209,12 @@ void sendHttpReq() {
     // Your Domain name with URL path or IP address with path
     http.begin(serverPath.c_str());
 
-    // Send HTTP GET request
-    int httpResponseCode = http.GET();
+    http.addHeader("Content-Type", "application/json");
+   
+    String dataAsString = createJsonDoc();
+
+    // Send HTTP POST request
+    int httpResponseCode = http.POST(dataAsString);
 
     if (httpResponseCode > 0) {
 //        Serial.print("HTTP Response code: ");
