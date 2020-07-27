@@ -1,5 +1,10 @@
 // Developing on the Wemos Pro ESP32esp32 
 // Test input pin GPIO 16
+// Includes for BME 280 sensor
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -9,6 +14,9 @@
 
 const char* ssid = "feeb";
 const char* password = "unisux12";
+
+#define SEALEVELPRESSURE_HPA (1013.25)
+Adafruit_BME280 bme; // I2C
 
 //Your Domain name with URL path or IP address with path
 String serverName = "http://192.168.86.121:9876/wind_and_water";
@@ -42,12 +50,18 @@ const int NUM_DATA_POINTS = WIFI_INTERVAL / WIND_FRAME_SIZE;
 double windSpeedKMh[NUM_DATA_POINTS];
 double maxGust[NUM_DATA_POINTS];
 String windDir[NUM_DATA_POINTS];
+volatile unsigned long frameStartTime;
+volatile unsigned long windClicks[WIND_FRAME_SIZE * NUM_DATA_POINTS];
+volatile int windClickCount;
+double temp[NUM_DATA_POINTS];
+double pressure[NUM_DATA_POINTS];
+double humidity[NUM_DATA_POINTS];
 
 void setup() {
   Serial.begin(115200);
 
-  // To let the serial warm up.
-  delay(500);
+  // To let the serial and I2C warm up.
+  delay(1000);
 
   // Make sure the wifi send interval is an integer multiple of the data window size
   float numDPointsF = (float)WIFI_INTERVAL / (float)WIND_FRAME_SIZE;
@@ -59,23 +73,35 @@ void setup() {
     setupWifi();
   }
 
+  // Start the BME sensor
+  unsigned status;
+  // default settings
+  status = bme.begin();
+  if(!status) {
+    Serial.println("Error starting temperature sensor");
+  }
+
   setupInputPins();
-  setupData();
 
   // Calculate the json data size
   // 3*JSON_ARRAY_SIZE(10) + JSON_OBJECT_SIZE(3) but this doesn't work
   // from https://arduinojson.org/v6/assistant/
 
   // Setup counter for tracking when to send WIFI data
+  windSpeedAvg.reset();
   dataSetCounter = 0;
   shortestWindClickInterval = WIND_FRAME_SIZE;
   waterClickCount = 0;
+  windClickCount = 0;
+  frameStartTime = 0;
 }
 
 void loop() {
+  frameStartTime = millis();
   // Do calculations on collected data
   calculateWindSpeed();
   calculateWindDir();
+  getTemperatureData();
 
   // Reset data set counter if it about to rollover, and send wifi data
   // Also clear the water counter here - don't need to update it every wind frame
@@ -85,6 +111,7 @@ void loop() {
     }
     dataSetCounter = 0;
     waterClickCount = 0;
+    windClickCount = 0;
   }
   else {
     dataSetCounter++;
@@ -93,6 +120,12 @@ void loop() {
   // Clear wind click params for this cycle before sleeping
   shortestWindClickInterval = WIND_FRAME_SIZE;
   delay(WIND_FRAME_SIZE);
+}
+
+void getTemperatureData() {
+  temp[dataSetCounter] = bme.readTemperature();
+  pressure[dataSetCounter] = bme.readPressure() / 100.f;
+  humidity[dataSetCounter] = bme.readHumidity();
 }
 
 void calculateWindSpeed() {
@@ -120,7 +153,7 @@ void calculateWindSpeed() {
     }
   }
   // Don't let the speed be higher than the current max gust
-  // Actually, this is not a big deal. Still usefful to compare the averaged and gust speeds
+  // Actually, this is not a big deal. Still useful to compare the averaged and gust speeds
 //  if(speed > curMaxGust) {
 //    speed = curMaxGust;
 //  }
@@ -157,6 +190,9 @@ void handleWindClick() {
   if(diff < shortestWindClickInterval) {
     shortestWindClickInterval = diff;
   }
+  // Add it to the array
+  windClicks[windClickCount] = thisTime - frameStartTime;
+  windClickCount++;
   // Add the diff to our moving average
   windSpeedAvg.addVal(diff);
 }
@@ -170,10 +206,6 @@ void handleWaterClick() {
   lastWaterClick = thisTime;
   waterClickCount++;
 //  Serial.println("Water click: " + String(waterClickCount));
-}
-
-void setupData() {
-  windSpeedAvg.reset();
 }
 
 void setupInputPins() {
@@ -209,10 +241,20 @@ String createJsonDoc() {
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
+  JsonArray windClickTimes = doc.createNestedArray("wind_click_times");
+  JsonArray tempArr = doc.createNestedArray("temperature");
+  JsonArray humArr = doc.createNestedArray("humidity");
+  JsonArray pressArr = doc.createNestedArray("pressure");
   for(int i = 0; i < NUM_DATA_POINTS; ++i) {
     windSpeedArr.add(windSpeedKMh[i]);
     windDirArr.add(windDir[i]);
     maxGustArr.add(maxGust[i]);
+    tempArr.add(temp[i]);
+    humArr.add(humidity[i]);
+    pressArr.add(pressure[i]);
+  }
+  for(int i = 0; i < windClickCount; ++i) {
+    windClickTimes.add(windClicks[i]);
   }
 
   return doc.as<String>();

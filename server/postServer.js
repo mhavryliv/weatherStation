@@ -13,11 +13,19 @@ app.post('/wind_and_water', (req, res) => {
   const gustArr = data.max_gust;
   const dirArr = data.wind_dir;
   const waterMm = data.water_mm;
+  const windClickTimes = data.wind_click_times;
+  const temperatureArr = data.temperature;
+  const humidityArr = data.humidity;
+  const pressureArr = data.pressure;
   
   console.log("Wind speed: " + speedArr);
+  console.log("Wind click times: " + windClickTimes);
   console.log("Gusts: " + gustArr);
   console.log("Direction: "+ dirArr);
   console.log("Rain (mm) " + waterMm);
+  console.log("Temperature " + temperatureArr);
+  console.log("Humidity " + humidityArr);
+  console.log("Pressure " + pressureArr);
   res.send("ok");
 })
 
