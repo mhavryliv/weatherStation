@@ -276,6 +276,8 @@ void setupWifi() {
 // Creates a JSON object out of required data, and returns as serialised string.
 String createJsonDoc() {
   StaticJsonDocument<2000> doc;
+  doc["info"] = "Weather station data";
+  doc["num_data_points"] = NUM_DATA_POINTS;
   doc["interval"] = WIND_FRAME_SIZE;
   doc["water_mm"] = waterClickCount * 0.2794;
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
