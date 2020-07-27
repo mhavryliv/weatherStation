@@ -5,7 +5,7 @@ const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-depe
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-module.exports.create = (event, context, callback) => {
+module.exports.add = (event, context, callback) => {
   const timestamp = new Date().getTime();
   const data = JSON.parse(event.body);
   if (typeof data.text !== 'string') {
@@ -25,7 +25,7 @@ module.exports.create = (event, context, callback) => {
       text: data.text,
       checked: false,
       createdAt: timestamp,
-      updatedAt: timestamp,
+      updatedAt: timestamp
     },
   };
 

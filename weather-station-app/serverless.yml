@@ -1,10 +1,32 @@
-service: aws-node-rest-api-with-dynamodb
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
 
-frameworkVersion: ">=1.1.0 <2.0.0"
+service: weather-station-service
+# app and org for use with dashboard.serverless.com
+app: weather-station-app
+org: markh
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs12.x
+
+# you can overwrite defaults here
+  stage: dev
+  region: ap-southeast-2
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
@@ -20,44 +42,29 @@ provider:
 
 functions:
   create:
-    handler: todos/create.create
+    handler: service/add.add
     events:
       - http:
-          path: todos
+          path: add
           method: post
           cors: true
 
   list:
-    handler: todos/list.list
+    handler: service/list.list
     events:
       - http:
-          path: todos
+          path: list
           method: get
           cors: true
 
   get:
-    handler: todos/get.get
+    handler: service/get.get
     events:
       - http:
-          path: todos/{id}
+          path: events/{id}
           method: get
           cors: true
 
-  update:
-    handler: todos/update.update
-    events:
-      - http:
-          path: todos/{id}
-          method: put
-          cors: true
-
-  delete:
-    handler: todos/delete.delete
-    events:
-      - http:
-          path: todos/{id}
-          method: delete
-          cors: true
 
 resources:
   Resources:
