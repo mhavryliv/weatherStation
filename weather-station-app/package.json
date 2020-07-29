@@ -6,6 +6,11 @@
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.720.0",
+    "serverless": "^1.77.1",
     "uuid": "^2.0.3"
+  },
+  "devDependencies": {
+    "jest": "^26.1.0",
+    "serverless-jest-plugin": "^0.3.0"
   }
 }

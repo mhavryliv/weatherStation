@@ -14,11 +14,15 @@
 service: weather-station-service
 # app and org for use with dashboard.serverless.com
 app: weather-station-app
-org: markh
+#comment this out to prevent the SERVERLESS_ENTERPRISE loggin
+# org: markh
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
+
+plugins:
+  - serverless-jest-plugin
 
 provider:
   name: aws
