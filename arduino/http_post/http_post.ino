@@ -59,6 +59,8 @@ volatile int windClickCount;
 double temp[NUM_DATA_POINTS];
 double pressure[NUM_DATA_POINTS];
 double humidity[NUM_DATA_POINTS];
+unsigned long lastBMERead;
+const unsigned long bmeReadDelay = 10000;
 
 void setup() {
   Serial.begin(115200);
@@ -82,7 +84,17 @@ void setup() {
   status = bme.begin();
   if(!status) {
     Serial.println("Error starting temperature sensor");
+    Serial.println("Code is: " + String(status));
   }
+
+  Serial.println("-- Weather Station Scenario --");
+  Serial.println("forced mode, 1x temperature / 1x humidity / 1x pressure oversampling,");
+  Serial.println("filter off");
+  bme.setSampling(Adafruit_BME280::MODE_FORCED,
+                  Adafruit_BME280::SAMPLING_X1, // temperature
+                  Adafruit_BME280::SAMPLING_X1, // pressure
+                  Adafruit_BME280::SAMPLING_X1, // humidity
+                  Adafruit_BME280::FILTER_OFF   );
 
   setupInputPins();
 
@@ -97,6 +109,7 @@ void setup() {
   waterClickCount = 0;
   windClickCount = 0;
   frameStartTime = 0;
+  lastBMERead = 0-bmeReadDelay;
 }
 
 void loop() {
@@ -129,6 +142,14 @@ void loop() {
 }
 
 void getTemperatureData() {
+  // If it's been more than bmeReadDelay since the last temperature measurement, force a new one
+  if((millis() - lastBMERead) >= bmeReadDelay) {
+    bme.takeForcedMeasurement();
+    lastBMERead = millis();
+    Serial.println("Forcing bme measurement");
+  }
+  const double t = bme.readTemperature();
+  Serial.println("Temp is: " + String(t, 3));
   temp[dataSetCounter] = bme.readTemperature();
   pressure[dataSetCounter] = bme.readPressure() / 100.f;
   humidity[dataSetCounter] = bme.readHumidity();
@@ -227,7 +248,7 @@ void setupWifi() {
   }
   WiFi.mode(WIFI_STA);  
   WiFi.begin(ssid, password);
-  Serial.println("Connecting");
+  Serial.println("Connecting to wifi: " + String(ssid));
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");

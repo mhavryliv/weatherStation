@@ -18,14 +18,16 @@ app.post('/wind_and_water', (req, res) => {
   const humidityArr = data.humidity;
   const pressureArr = data.pressure;
 
-  console.log(data);
+  // console.log(data);
+  // console.log(JSON.stringify(data));
   
   // console.log("Wind speed: " + speedArr);
   // console.log("Wind click times: " + windClickTimes);
   // console.log("Gusts: " + gustArr);
   // console.log("Direction: "+ dirArr);
   // console.log("Rain (mm) " + waterMm);
-  // console.log("Temperature " + temperatureArr);
+  console.log(new Date());
+  console.log("Temperature " + temperatureArr);
   // console.log("Humidity " + humidityArr);
   // console.log("Pressure " + pressureArr);
   res.send("ok");

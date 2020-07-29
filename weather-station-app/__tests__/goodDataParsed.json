@@ -1,0 +1,35 @@
+[
+  {
+    "time": 1000,
+    "water_mm": 15,
+    "wind_speed": 4,
+    "wind_dir": "N",
+    "max_gust": 5,
+    "wind_click_times": [150,2500],
+    "temperature": 18,
+    "humidity": 100,
+    "pressure": 1205.29
+  },
+  {
+    "time": 3000,
+    "water_mm": 15,
+    "wind_speed": 12,
+    "wind_dir": "E",
+    "max_gust": 20,
+    "wind_click_times": [0,100],
+    "temperature": 19.1,
+    "humidity": 90,
+    "pressure": 1201
+  },
+  {
+    "time": 5000,
+    "water_mm": 15,
+    "wind_speed":2,
+    "wind_dir": "W",
+    "max_gust": 99,
+    "wind_click_times": [1900],
+    "temperature": 20.5,
+    "humidity": 80,
+    "pressure": 1200
+  }
+]
