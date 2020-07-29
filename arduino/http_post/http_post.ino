@@ -60,7 +60,7 @@ double temp[NUM_DATA_POINTS];
 double pressure[NUM_DATA_POINTS];
 double humidity[NUM_DATA_POINTS];
 unsigned long lastBMERead;
-const unsigned long bmeReadDelay = 10000;
+const unsigned long bmeReadDelay = 60000;
 
 void setup() {
   Serial.begin(115200);
@@ -109,13 +109,13 @@ void setup() {
   waterClickCount = 0;
   windClickCount = 0;
   frameStartTime = 0;
-  lastBMERead = 0-bmeReadDelay;
+  lastBMERead = 0;
 }
 
 void loop() {
   if(isDoingWifi) {
     ArduinoOTA.handle();
-  }
+  } 
   frameStartTime = millis();
   // Do calculations on collected data
   calculateWindSpeed();
@@ -143,13 +143,13 @@ void loop() {
 
 void getTemperatureData() {
   // If it's been more than bmeReadDelay since the last temperature measurement, force a new one
-  if((millis() - lastBMERead) >= bmeReadDelay) {
+  if(lastBMERead == 0 || ((millis() - lastBMERead) >= bmeReadDelay)) {
     bme.takeForcedMeasurement();
     lastBMERead = millis();
-    Serial.println("Forcing bme measurement");
+//    Serial.println("Forcing bme measurement");
   }
   const double t = bme.readTemperature();
-  Serial.println("Temp is: " + String(t, 3));
+//  Serial.println("Temp is: " + String(t, 3));
   temp[dataSetCounter] = bme.readTemperature();
   pressure[dataSetCounter] = bme.readPressure() / 100.f;
   humidity[dataSetCounter] = bme.readHumidity();
