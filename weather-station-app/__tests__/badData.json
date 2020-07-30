@@ -3,74 +3,50 @@
     "info": "weather station data"
   },
   "missing_keys": {
-    "info":"Weather station data",
-    "interval":2000,
-    "water_mm":15,
-    "wind_speed":[
-      4,
-      12,
-      2
+    "info": "Weather station data",
+    "num_data_points": 3,
+    "interval": 2000,
+    "temperature": 17.13,
+    "humidity": 52.76855,
+    "wind_speed": [
+      0,
+      0,
+      0
     ],
-    "max_gust":[
-      5,
-      20,
-      99
+    "wind_dir": [
+      "E",
+      "E",
+      "E"
     ],
-    "wind_click_times":[
-     150,
-     2500,
-     3000,
-     3100,
-     5900
+    "max_gust": [
+      0,
+      0,
+      0
     ],
-    "humidity":[
-      100,
-      90,
-      80
-    ],
-    "pressure":[
-      1205.29,
-      1201
-    ]
+    "wind_click_times": []
   },
   "missing_data": {
-    "info":"Weather station data",
-    "num_data_points":3,
-    "interval":2000,
-    "water_mm":15,
-    "wind_speed":[
-      4,
-      12,
-      2
+    "info": "Weather station data",
+    "num_data_points": 3,
+    "interval": 2000,
+    "water_mm": 0,
+    "temperature": 17.13,
+    "humidity": 52.76855,
+    "pressure": 1018.977,
+    "wind_speed": [
+      0,
+      0
     ],
-    "wind_dir":[
-      "N",
-      "W"
+    "wind_dir": [
+      "E",
+      "E",
+      "E"
     ],
-    "max_gust":[
-      5,
-      20,
-      99
+    "max_gust": [
+      0,
+      0,
+      0
     ],
-    "wind_click_times":[
-     150,
-     2500,
-     3000,
-     3100,
-     5900
-    ],
-    "temperature":[
-      19.1,
-      20.5
-    ],
-    "humidity":[
-      100,
-      90,
-      80
-    ],
-    "pressure":[
-      1205.29,
-      1201
-    ]
+    "wind_click_times": []
   }
 }

@@ -7,27 +7,28 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 function isValidData(data) {
   if(!data.info || data.info.indexOf("Weather station data") === -1) {
-    return false;
+    return {
+      'missing_id': true,
+      'has_all_data': false
+    };
   }
-  return true;
-}
-module.exports.isValidData = isValidData;
-
-function containsAllItems(data) {
-  const allDataKeys = Object.keys(data);
+  let allDataKeys = Object.keys(data);
   let missingKeys = [];
   // Check key data
-  const dataRequired = ["interval", "num_data_points", "water_mm",
+  let dataRequired = ["interval", "num_data_points", "water_mm",
                         "wind_speed", "wind_dir", "max_gust", "temperature", 
-                        "humidity", "pressure"];
-  dataRequired.forEach(requiredKey => {
-    if(allDataKeys.indexOf(requiredKey) === -1) {
-      missingKeys.push(requiredKey);
-    }
-  })
-  if(missingKeys.length != 0) {
+                        "humidity", "pressure", "info", "wind_click_times"];
+  // Quick check they are the same
+  if(JSON.stringify(allDataKeys.sort()) !== JSON.stringify(dataRequired.sort())) {
+    dataRequired.forEach(requiredKey => {
+      if(allDataKeys.indexOf(requiredKey) === -1) {
+        missingKeys.push(requiredKey);
+      }
+    })
     return {
-      'missing_keys': missingKeys
+      'key_mismatch': true,
+      'missing_keys': missingKeys,
+      'has_all_data': false,
     }
   }
 
@@ -46,7 +47,8 @@ function containsAllItems(data) {
   })
   if(missingData.length !== 0) {
     return {
-      'missing_data': missingData
+      'missing_data': missingData,
+      'has_all_data': false
     }
   }
 
@@ -54,7 +56,7 @@ function containsAllItems(data) {
     'has_all_data': true
   };
 }
-module.exports.containsAllItems = containsAllItems
+module.exports.isValidData = isValidData;
 
 
 module.exports.add = (event, context, callback) => {
@@ -63,19 +65,11 @@ module.exports.add = (event, context, callback) => {
     callback(null, {
       statusCode: 400,
       headers: { 'Content-Type': 'text/plain' },
-      body: "Not recognised weather event",
+      body: "Not expected data",
     });
     return;
   }
 
-  if(!containsAllItems(data)) {
-    callback(null, {
-      statusCode: 400,
-      headers: { 'Content-Type': 'text/plain' },
-      body: "Data doesn't contain all expected items",
-    });
-    return;
-  }
 
   const timestamp = new Date().getTime();
 
