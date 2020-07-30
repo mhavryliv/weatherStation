@@ -22,7 +22,7 @@ const char* password = "unisux12";
 Adafruit_BME280 bme; // I2C
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.86.121:9876/wind_and_water";
+String serverName = "http://192.168.86.121:9876/weather_data_up";
 
 const bool isDoingWifi = true;
 // Wifi sending interval (msec)
@@ -56,9 +56,9 @@ String windDir[NUM_DATA_POINTS];
 volatile unsigned long frameStartTime;
 volatile unsigned long windClicks[WIND_FRAME_SIZE * NUM_DATA_POINTS];
 volatile int windClickCount;
-double temp[NUM_DATA_POINTS];
-double pressure[NUM_DATA_POINTS];
-double humidity[NUM_DATA_POINTS];
+double temperature;
+double pressure;
+double humidity;
 unsigned long lastBMERead;
 const unsigned long bmeReadDelay = 60000;
 
@@ -97,10 +97,6 @@ void setup() {
                   Adafruit_BME280::FILTER_OFF   );
 
   setupInputPins();
-
-  // Calculate the json data size
-  // 3*JSON_ARRAY_SIZE(10) + JSON_OBJECT_SIZE(3) but this doesn't work
-  // from https://arduinojson.org/v6/assistant/
 
   // Setup counter for tracking when to send WIFI data
   windSpeedAvg.reset();
@@ -147,12 +143,10 @@ void getTemperatureData() {
     bme.takeForcedMeasurement();
     lastBMERead = millis();
 //    Serial.println("Forcing bme measurement");
+    temperature = bme.readTemperature();
+    pressure = bme.readPressure() / 100.f;
+    humidity = bme.readHumidity();
   }
-  const double t = bme.readTemperature();
-//  Serial.println("Temp is: " + String(t, 3));
-  temp[dataSetCounter] = bme.readTemperature();
-  pressure[dataSetCounter] = bme.readPressure() / 100.f;
-  humidity[dataSetCounter] = bme.readHumidity();
 }
 
 void calculateWindSpeed() {
@@ -301,20 +295,17 @@ String createJsonDoc() {
   doc["num_data_points"] = NUM_DATA_POINTS;
   doc["interval"] = WIND_FRAME_SIZE;
   doc["water_mm"] = waterClickCount * 0.2794;
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["pressure"] = pressure;
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
   JsonArray windClickTimes = doc.createNestedArray("wind_click_times");
-  JsonArray tempArr = doc.createNestedArray("temperature");
-  JsonArray humArr = doc.createNestedArray("humidity");
-  JsonArray pressArr = doc.createNestedArray("pressure");
   for(int i = 0; i < NUM_DATA_POINTS; ++i) {
     windSpeedArr.add(windSpeedKMh[i]);
     windDirArr.add(windDir[i]);
     maxGustArr.add(maxGust[i]);
-    tempArr.add(temp[i]);
-    humArr.add(humidity[i]);
-    pressArr.add(pressure[i]);
   }
   for(int i = 0; i < windClickCount; ++i) {
     windClickTimes.add(windClicks[i]);
@@ -350,7 +341,7 @@ void sendHttpReq() {
 //        Serial.println(payload);
     }
     else {
-      Serial.print("Error code: ");
+      Serial.print("HTTP Error code: ");
       Serial.println(httpResponseCode);
     }
     // Free resources

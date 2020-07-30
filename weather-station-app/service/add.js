@@ -35,13 +35,13 @@ function containsAllItems(data) {
 
   // Check all arrays have the right amount of elements
   const arrayKeys = 
-  ["water_mm", "wind_speed", "wind_dir", "max_gust", "temperature", "humidity", "pressure"];
+  ["wind_speed", "wind_dir", "max_gust"];
   
   let missingData = [];
 
   arrayKeys.forEach(arrayKey => {
-    if(!data[arrayKey].isArray() || data[arrayKey].length !== numDataPoints) {
-      missingData.push(k);
+    if(!data[arrayKey] || data[arrayKey].length !== numDataPoints) {
+      missingData.push(arrayKey);
     }
   })
   if(missingData.length !== 0) {

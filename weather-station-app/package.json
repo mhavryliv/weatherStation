@@ -10,6 +10,8 @@
     "uuid": "^2.0.3"
   },
   "devDependencies": {
+    "express": "^4.17.1",
+    "fs": "0.0.1-security",
     "jest": "^26.1.0",
     "serverless-jest-plugin": "^0.3.0"
   }

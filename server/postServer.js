@@ -5,7 +5,7 @@ var bodyParser = require('body-parser')
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
-app.post('/wind_and_water', (req, res) => {
+app.post('/weather_data_up', (req, res) => {
   const data = req.body;
   const timestamp = Date.now();
   const samplingInterval = data.interval;
@@ -18,7 +18,8 @@ app.post('/wind_and_water', (req, res) => {
   const humidityArr = data.humidity;
   const pressureArr = data.pressure;
 
-  // console.log(data);
+  console.log(new Date());
+  console.log(data);
   // console.log(JSON.stringify(data));
   
   // console.log("Wind speed: " + speedArr);
@@ -26,8 +27,7 @@ app.post('/wind_and_water', (req, res) => {
   // console.log("Gusts: " + gustArr);
   // console.log("Direction: "+ dirArr);
   // console.log("Rain (mm) " + waterMm);
-  console.log(new Date());
-  console.log("Temperature " + temperatureArr);
+  // console.log("Temperature " + temperatureArr);
   // console.log("Humidity " + humidityArr);
   // console.log("Pressure " + pressureArr);
   res.send("ok");
