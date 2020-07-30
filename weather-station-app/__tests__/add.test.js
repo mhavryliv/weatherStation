@@ -12,14 +12,14 @@ app.use(bodyParser.json())
 jest.setTimeout(10000);
 
 // This calls back with good data either from disk or after receviing from arduino
-function getGoodData(callback) {
+ function getGoodData() {
   if(!fs.existsSync(goodDataPath)) {
     app.post('/weather_data_up', (req, res) => {
       const data = {"body": req.body};
       fs.writeFileSync(goodDataPath, JSON.stringify(data, null, 2));
       res.send("ok");
       server.close();
-      callback(data);
+      return data;
     })
 
     let server = app.listen(9876, () => {
@@ -27,22 +27,20 @@ function getGoodData(callback) {
     })
   }
   else {
-    callback(require('./goodData.json'));
+    return require('./goodData.json');
   }
 }
 
 // Global good data is set after first call to getGoodData()
 let goodData = undefined;
-test('Data validation', done => {
-  getGoodData(d => {
-    goodData = d;
-    expect(addHandler.isValidData(goodData)).toHaveProperty("has_all_data");
-    expect(addHandler.isValidData(badData.wrong_info)).toHaveProperty("has_all_data", false);
-    expect(addHandler.isValidData(badData.missing_keys)).toHaveProperty("missing_keys");
-    expect(addHandler.isValidData(badData.missing_data)).toHaveProperty("missing_data");
-    
-    done();
-  });
+test('Data validation', async done => {
+  goodData = await getGoodData();
+  expect(addHandler.isValidData(goodData)).toHaveProperty("has_all_data");
+  expect(addHandler.isValidData(badData.wrong_info)).toHaveProperty("has_all_data", false);
+  expect(addHandler.isValidData(badData.missing_keys)).toHaveProperty("missing_keys");
+  expect(addHandler.isValidData(badData.missing_data)).toHaveProperty("missing_data");
+  
+  done();
 })
 
 // Will be executed after done() is called in the first test
