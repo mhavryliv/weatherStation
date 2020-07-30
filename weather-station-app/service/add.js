@@ -6,6 +6,12 @@ const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-depe
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 function isValidData(data) {
+  if(!data) {
+    return {
+      'has_all_data': false,
+      'data_undefined': true
+    }
+  }
   if(!data.info || data.info.indexOf("Weather station data") === -1) {
     return {
       'missing_id': true,
@@ -58,18 +64,30 @@ function isValidData(data) {
 }
 module.exports.isValidData = isValidData;
 
+function convertDataToArrays() {
+
+}
 
 module.exports.add = (event, context, callback) => {
   const data = event.body;
-  if(!isValidData(data)) {
+  const dataCheck = isValidData(data);
+
+  if(!dataCheck.has_all_data) {
     callback(null, {
       statusCode: 400,
-      headers: { 'Content-Type': 'text/plain' },
-      body: "Not expected data",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dataCheck)
     });
     return;
   }
 
+  callback(null, {
+    statusCode: 400,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({"success": true})
+  })
+
+  return;
 
   const timestamp = new Date().getTime();
 

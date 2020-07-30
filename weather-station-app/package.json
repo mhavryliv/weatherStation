@@ -14,5 +14,11 @@
     "fs": "0.0.1-security",
     "jest": "^26.1.0",
     "serverless-jest-plugin": "^0.3.0"
+  },
+  "scripts": {
+    "test": "sls invoke test",
+    "addnodata": "serverless invoke local -f add",
+    "adddata": "serverless invoke local -f add -p __tests__/goodData.json"
   }
+
 }

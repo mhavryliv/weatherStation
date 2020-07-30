@@ -15,7 +15,7 @@ jest.setTimeout(10000);
 function getGoodData(callback) {
   if(!fs.existsSync(goodDataPath)) {
     app.post('/weather_data_up', (req, res) => {
-      const data = req.body;
+      const data = {"body": req.body};
       fs.writeFileSync(goodDataPath, JSON.stringify(data, null, 2));
       res.send("ok");
       server.close();

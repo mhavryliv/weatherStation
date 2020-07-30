@@ -341,8 +341,11 @@ void sendHttpReq() {
 //        Serial.println(payload);
     }
     else {
-      Serial.print("HTTP Error code: ");
-      Serial.println(httpResponseCode);
+      // Don't bother printing if server is unreachable
+//      if(httpResponseCode != -1) {
+        Serial.print("Unexpected HTTP Error code: ");
+        Serial.println(httpResponseCode);
+//      }
     }
     // Free resources
     http.end();

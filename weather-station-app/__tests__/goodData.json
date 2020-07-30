@@ -1,25 +1,27 @@
 {
-  "info": "Weather station data",
-  "num_data_points": 3,
-  "interval": 2000,
-  "water_mm": 0,
-  "temperature": 17.13,
-  "humidity": 52.76855,
-  "pressure": 1018.977,
-  "wind_speed": [
-    0,
-    0,
-    0
-  ],
-  "wind_dir": [
-    "E",
-    "E",
-    "E"
-  ],
-  "max_gust": [
-    0,
-    0,
-    0
-  ],
-  "wind_click_times": []
+  "body": {
+    "info": "Weather station data",
+    "num_data_points": 3,
+    "interval": 2000,
+    "water_mm": 0,
+    "temperature": 17.41,
+    "humidity": 52.05762,
+    "pressure": 1018.44,
+    "wind_speed": [
+      0,
+      0,
+      0
+    ],
+    "wind_dir": [
+      "E",
+      "E",
+      "E"
+    ],
+    "max_gust": [
+      0,
+      0,
+      0
+    ],
+    "wind_click_times": []
+  }
 }
