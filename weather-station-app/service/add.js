@@ -23,7 +23,7 @@ function isValidData(data) {
   // Check key data
   let dataRequired = ["interval", "num_data_points", "water_mm",
                         "wind_speed", "wind_dir", "max_gust", "temperature", 
-                        "humidity", "pressure", "info", "wind_click_times"];
+                        "humidity", "pressure", "info", "wind_clicks"];
   // Quick check they are the same
   if(JSON.stringify(allDataKeys.sort()) !== JSON.stringify(dataRequired.sort())) {
     dataRequired.forEach(requiredKey => {
@@ -67,7 +67,7 @@ module.exports.isValidData = isValidData;
 function convertDataToArrays(data) {
   // Fields to pull out to fhte 
   const aggregrateDbFields = ["water_mm", "temperature", "humidity", "pressure"];
-  const arrayDbFields = [ "wind_speed", "wind_dir", "max_gust", "wind_click_times"];
+  const arrayDbFields = [ "wind_speed", "wind_dir", "max_gust", "wind_clicks"];
   // Number of data points in this data set
   const numItems = data.num_data_points;
   // Sampling interval in msec
@@ -76,8 +76,10 @@ function convertDataToArrays(data) {
   const startTime = Date.now();
   // Loop through the number of items we're going to build
   for(var i = 0; i < numItems; ++i) {
+    const itemTimeOffset = i*samplingInterval;
     let item = {
-      "time": startTime + (i * samplingInterval)
+      "time": startTime + itemTimeOffset,
+      "wind_clicks": []
     }
     // Loop through and assign the values that are common across all items
     for(var j = 0; j < aggregrateDbFields.length; ++j) {
@@ -87,12 +89,29 @@ function convertDataToArrays(data) {
     // Loop through the array values, assigning the appropriate one
     for(var j = 0; j < arrayDbFields.length; ++j) {
       const field = arrayDbFields[j];
-      item[field] = data[field][i];
+      // Handle wind clicks differently
+      if(field === "wind_clicks") {
+        const dataWindClicks = data[field];
+        // Loop through wind clicks and pick out those in range of this item
+        for(var k = 0; k < dataWindClicks.length; ++k) {
+          const wclickTime = dataWindClicks[k];
+          if((wclickTime >= itemTimeOffset) 
+            && (wclickTime < (itemTimeOffset+samplingInterval))) {
+            // Subtract this item's start time from the windclick time so they are all recorded as 
+            // a msec offset from the item's time
+            item[field].push(wclickTime - itemTimeOffset);
+          }
+        }
+      }
+      // If not wind click, simply assign it to the item
+      else {
+        item[field] = data[field][i];
+      } 
     }
     // Add it to the items array
     items.push(item);
   }
-
+  
   return items;
 }
 module.exports.convertDataToArrays = convertDataToArrays;
@@ -119,25 +138,6 @@ module.exports.add = (event, context, callback) => {
   const itemsToWrite = convertDatatoArrays(data);
 
   return;
-
-  const timestamp = new Date().getTime();
-
-  const keys = 
-  ["water_mm", "wind_speed", "wind_dir", "max_gust", "temperature", "humidity", "pressure"];
-
-  let dataToStore;
-  const numDataPoints = data.num_data_points;
-  let obj = {};
-  obj["date"] = timestamp;
-  obj["id"] = uuid.v1();
-  obj[keys[0]] = data[keys[0]][0];
-  obj[keys[1]] = data[keys[1]][0];
-  obj[keys[2]] = data[keys[2]][0];
-  obj[keys[3]] = data[keys[3]][0];
-  obj[keys[4]] = data[keys[4]][0];
-  obj[keys[5]] = data[keys[5]][0];
-  obj[keys[6]] = data[keys[6]][0];
-
 
   const params = {
     TableName: process.env.DYNAMODB_TABLE,

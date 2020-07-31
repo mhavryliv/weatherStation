@@ -301,7 +301,7 @@ String createJsonDoc() {
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
-  JsonArray windClickTimes = doc.createNestedArray("wind_click_times");
+  JsonArray windClickTimes = doc.createNestedArray("wind_clicks");
   for(int i = 0; i < NUM_DATA_POINTS; ++i) {
     windSpeedArr.add(windSpeedKMh[i]);
     windDirArr.add(windDir[i]);

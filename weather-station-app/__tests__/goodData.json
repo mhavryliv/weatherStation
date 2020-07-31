@@ -4,9 +4,9 @@
     "num_data_points": 3,
     "interval": 2000,
     "water_mm": 0,
-    "temperature": 17.41,
-    "humidity": 52.05762,
-    "pressure": 1018.44,
+    "temperature": 17.48,
+    "humidity": 40.41895,
+    "pressure": 1020.629,
     "wind_speed": [
       0,
       0,
@@ -22,6 +22,6 @@
       0,
       0
     ],
-    "wind_click_times": []
+    "wind_clicks": [500, 2500, 3500, 5999]
   }
 }

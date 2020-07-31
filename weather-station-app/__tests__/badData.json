@@ -23,7 +23,7 @@
       0,
       0
     ],
-    "wind_click_times": []
+    "wind_clicks": []
   },
   "missing_data": {
     "info": "Weather station data",
@@ -47,6 +47,6 @@
       0,
       0
     ],
-    "wind_click_times": []
+    "wind_clicks": []
   }
 }

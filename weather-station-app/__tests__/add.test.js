@@ -12,29 +12,29 @@ app.use(bodyParser.json())
 jest.setTimeout(10000);
 
 // This calls back with good data either from disk or after receviing from arduino
- function getGoodData() {
+ let getGoodData = new Promise(function(resolve, reject) {
   if(!fs.existsSync(goodDataPath)) {
-    app.post('/weather_data_up', (req, res) => {
-      const data = {"body": req.body};
-      fs.writeFileSync(goodDataPath, JSON.stringify(data, null, 2));
-      res.send("ok");
-      server.close();
-      return data;
-    })
+      app.post('/weather_data_up', (req, res) => {
+        const data = {"body": req.body};
+        fs.writeFileSync(goodDataPath, JSON.stringify(data, null, 2));
+        res.send("ok");
+        server.close();
+        resolve(data);
+      })
 
-    let server = app.listen(9876, () => {
-      console.log("Listening for real data on port 9876");
-    })
-  }
-  else {
-    return require('./goodData.json');
-  }
-}
+      let server = app.listen(9876, () => {
+        console.log("Listening for real data on port 9876");
+      })
+    }
+    else {
+      resolve(require('./goodData.json'));
+    }
+ })
 
 // Global good data is set after first call to getGoodData()
 let goodData = undefined;
 test('Data validation', async done => {
-  goodData = await getGoodData();
+  goodData = await getGoodData;
   expect(addHandler.isValidData(goodData)).toHaveProperty("has_all_data");
   expect(addHandler.isValidData(badData.wrong_info)).toHaveProperty("has_all_data", false);
   expect(addHandler.isValidData(badData.missing_keys)).toHaveProperty("missing_keys");
@@ -61,22 +61,59 @@ test('Data conversion test', () => {
   // Go randomly through entries
   // Build an array of fields that are arrays in the original data
   let arrFields = [];
+  // And those that are single values
+  let singletonFields = [];
+  // Ignore these fields because they won't exist in the outcome
+  const ignoreFields = ["interval", "num_data_points", "info", "wind_clicks"];
   const allOriginalFields = Object.keys(originalData);
   for(var i = 0; i < allOriginalFields.length; ++i) {
     const fieldKey = allOriginalFields[i];
+    if(ignoreFields.indexOf(fieldKey) !== -1) {
+      continue;
+    }
     if(Array.isArray(originalData[fieldKey])) {
       arrFields.push(fieldKey);
     }
+    else {
+      if(fieldKey)
+      singletonFields.push(fieldKey);
+    }
   }
-  console.log(arrFields);
-  const numToTest = 500;
-  // Check data
-  // Check wind click times!!!
-  // for(var i = 0; i < numToTest; ++i) {
-  //   const itemIndex = rand(numItems);
-  //   const testData = arrData[itemIndex];
+  const numToTest = 1000;
+  // Check data by randomly choosing an item and comparing it to the value in the original array
+  for(var i = 0; i < numToTest; ++i) {
+    const itemIndex = rand(numItems);
+    const testData = arrData[itemIndex];
+    const testSingleton = rand(2);
+    if(testSingleton) {
+      const singletonField = singletonFields[rand(singletonFields.length)];
+      const compareValue = originalData[singletonField];
+      const testValue = testData[singletonField];
+      expect(testValue).toBe(compareValue);
+    }
+    else {
+      const arrField = arrFields[rand(arrFields.length)];
+      const compareValue = originalData[arrField][itemIndex];
+      const testValue = testData[arrField];
+      expect(testValue).toBe(compareValue);
+    }
+  }
+  // Treat wind times separately.
+  if(originalData.wind_clicks.length !== 0) {
+    const originalClicks = originalData.wind_clicks;
+    const startTime = arrData[0].time;
+    const interval = originalData.interval;
+    for(var i = 0; i < originalClicks.length; ++i) {
+      let compareValue = originalClicks[i];
+      const testItemIndex = Math.floor(compareValue / interval);
+      // Adjust the comparevalue to account for the start time
+      compareValue -= (testItemIndex*interval);
+      // console.log("Looking for index: " + testItemIndex);
+      // console.log(arrData[testItemIndex]);
 
-  // }
+      expect(arrData[testItemIndex].wind_clicks.indexOf(compareValue)).not.toBe(-1);
+    }
+  }
 
 })
 
@@ -84,7 +121,6 @@ test('Data conversion test', () => {
 
 
 
-
 function rand(max) {
-  return Math.floor(Math.random() * Math.floor(max));
+  return Math.floor(Math.random() * max);
 }
