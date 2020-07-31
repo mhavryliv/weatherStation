@@ -15,7 +15,8 @@ function isValidData(data) {
   if(!data.info || data.info.indexOf("Weather station data") === -1) {
     return {
       'missing_id': true,
-      'has_all_data': false
+      'has_all_data': false,
+      'data': data
     };
   }
   let allDataKeys = Object.keys(data);
@@ -111,13 +112,13 @@ function convertDataToArrays(data) {
     // Add it to the items array
     items.push(item);
   }
-  
+
   return items;
 }
 module.exports.convertDataToArrays = convertDataToArrays;
 
 module.exports.add = (event, context, callback) => {
-  const data = event.body;
+  const data = JSON.parse(event.body);
   const dataCheck = isValidData(data);
 
   if(!dataCheck.has_all_data) {
@@ -136,6 +137,7 @@ module.exports.add = (event, context, callback) => {
   })
 
   const itemsToWrite = convertDatatoArrays(data);
+
 
   return;
 
