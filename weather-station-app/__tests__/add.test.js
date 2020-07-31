@@ -44,6 +44,47 @@ test('Data validation', async done => {
 })
 
 // Will be executed after done() is called in the first test
-// test('Second test', () => {
+test('Data conversion test', () => {
+  // Extract the actual data out of the original goodData http req
+  const originalData = goodData.body;
+  // Get the array data
+  const arrData = addHandler.convertDataToArrays(originalData);
+  // Prepare a few bits of data to test
+  const numItems = originalData.num_data_points;
+  // Makes sure it's the correct array size
+  expect(arrData.length).toBe(numItems);
+  // Make sure the times are right
+  const firstTime = arrData[0].time;
+  for(var i = 1; i < numItems; ++i) {
+    expect(arrData[i].time).toBe(firstTime + (i * originalData.interval));
+  }
+  // Go randomly through entries
+  // Build an array of fields that are arrays in the original data
+  let arrFields = [];
+  const allOriginalFields = Object.keys(originalData);
+  for(var i = 0; i < allOriginalFields.length; ++i) {
+    const fieldKey = allOriginalFields[i];
+    if(Array.isArray(originalData[fieldKey])) {
+      arrFields.push(fieldKey);
+    }
+  }
+  console.log(arrFields);
+  const numToTest = 500;
+  // Check data
+  // Check wind click times!!!
+  // for(var i = 0; i < numToTest; ++i) {
+  //   const itemIndex = rand(numItems);
+  //   const testData = arrData[itemIndex];
 
-// })
+  // }
+
+})
+
+
+
+
+
+
+function rand(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}

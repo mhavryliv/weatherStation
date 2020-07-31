@@ -38,11 +38,10 @@ function isValidData(data) {
     }
   }
 
-  const numDataPoints = data.num_data_points;
-
   // Check all arrays have the right amount of elements
-  const arrayKeys = 
-  ["wind_speed", "wind_dir", "max_gust"];
+  const numDataPoints = data.num_data_points;
+  // Keys with array values
+  const arrayKeys = ["wind_speed", "wind_dir", "max_gust"];
   
   let missingData = [];
 
@@ -64,9 +63,39 @@ function isValidData(data) {
 }
 module.exports.isValidData = isValidData;
 
-function convertDataToArrays() {
+// Converts data in the Arduino format into array format for entry into our DB
+function convertDataToArrays(data) {
+  // Fields to pull out to fhte 
+  const aggregrateDbFields = ["water_mm", "temperature", "humidity", "pressure"];
+  const arrayDbFields = [ "wind_speed", "wind_dir", "max_gust", "wind_click_times"];
+  // Number of data points in this data set
+  const numItems = data.num_data_points;
+  // Sampling interval in msec
+  const samplingInterval = data.interval;
+  let items = [];
+  const startTime = Date.now();
+  // Loop through the number of items we're going to build
+  for(var i = 0; i < numItems; ++i) {
+    let item = {
+      "time": startTime + (i * samplingInterval)
+    }
+    // Loop through and assign the values that are common across all items
+    for(var j = 0; j < aggregrateDbFields.length; ++j) {
+      const field = aggregrateDbFields[j];
+      item[field] = data[field];
+    }
+    // Loop through the array values, assigning the appropriate one
+    for(var j = 0; j < arrayDbFields.length; ++j) {
+      const field = arrayDbFields[j];
+      item[field] = data[field][i];
+    }
+    // Add it to the items array
+    items.push(item);
+  }
 
+  return items;
 }
+module.exports.convertDataToArrays = convertDataToArrays;
 
 module.exports.add = (event, context, callback) => {
   const data = event.body;
@@ -86,6 +115,8 @@ module.exports.add = (event, context, callback) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({"success": true})
   })
+
+  const itemsToWrite = convertDatatoArrays(data);
 
   return;
 
