@@ -136,6 +136,7 @@ test('Data write test', () => {
 
   addHandler.writeDataToDb(arrData, dynamoDb, "weather-station-service-dev", (err) => {
     expect(err).toBeNull();
+    // And add a test to read it back and make sure
   })
 })
 

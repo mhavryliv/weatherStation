@@ -98,16 +98,16 @@ resources:
           -
             AttributeName: id
             AttributeType: S
-          -
-            AttributeName: time
-            AttributeType: N
+          # -
+          #   AttributeName: time
+          #   AttributeType: N
         KeySchema:
           -
             AttributeName: id
             KeyType: HASH
-          -
-            AttributeName: time
-            KeyType: RANGE
+          # -
+          #   AttributeName: time
+          #   KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
