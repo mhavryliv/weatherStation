@@ -23,6 +23,24 @@ org: markh
 
 plugins:
   - serverless-jest-plugin
+  - serverless-dynamodb-local
+  - serverless-offline #should be last in list
+
+custom:
+  dynamodb:
+  # If you only want to use DynamoDB Local in some stages, declare them here
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: false
+      heapInitial: 200m
+      heapMax: 1g
+      migrate: true
+      seed: true
+      convertEmptyValues: true
+    # Uncomment only if you already have a DynamoDB running locally
+    # noStart: true
 
 provider:
   name: aws
@@ -80,10 +98,16 @@ resources:
           -
             AttributeName: id
             AttributeType: S
+          -
+            AttributeName: time
+            AttributeType: N
         KeySchema:
           -
             AttributeName: id
             KeyType: HASH
+          -
+            AttributeName: time
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

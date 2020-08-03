@@ -8,6 +8,16 @@ var app = express();
 var bodyParser = require('body-parser')
 app.use(bodyParser.json())
 
+const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
+const IS_OFFLINE = process.env.IS_OFFLINE;
+
+// Setup the dynamodb ref for local testing
+let dynamoDb;
+dynamoDb = new AWS.DynamoDB.DocumentClient({
+  region: 'localhost',
+  endpoint: 'http://localhost:8000',
+});
+
 // Set the timeout to 10 sec to wait for post data from weather station
 jest.setTimeout(10000);
 
@@ -101,6 +111,7 @@ test('Data conversion test', () => {
   // Treat wind times separately.
   if(originalData.wind_clicks.length !== 0) {
     const originalClicks = originalData.wind_clicks;
+    console.log(originalClicks);
     const startTime = arrData[0].time;
     const interval = originalData.interval;
     for(var i = 0; i < originalClicks.length; ++i) {
@@ -115,6 +126,17 @@ test('Data conversion test', () => {
     }
   }
 
+})
+
+test('Data write test', () => {
+  // Extract the actual data out of the original goodData http req
+  const originalData = goodData.body;
+  // Get the array data
+  const arrData = addHandler.convertDataToArrays(originalData);
+
+  addHandler.writeDataToDb(arrData, dynamoDb, "weather-station-service-dev", (err) => {
+    expect(err).toBeNull();
+  })
 })
 
 

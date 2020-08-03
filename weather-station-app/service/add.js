@@ -2,8 +2,18 @@
 
 const uuid = require('uuid');
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
+const IS_OFFLINE = process.env.IS_OFFLINE;
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+let dynamoDb;
+if(IS_OFFLINE === 'true') {
+  dynamoDb = new AWS.DynamoDB.DocumentClient({
+    region: 'localhost',
+    endpoint: 'http://localhost:8000',
+  });
+}
+else {
+  dynamoDb = new AWS.DynamoDB.DocumentClient();
+}
 
 function isValidData(data) {
   if(!data) {
@@ -117,6 +127,35 @@ function convertDataToArrays(data) {
 }
 module.exports.convertDataToArrays = convertDataToArrays;
 
+function writeDataToDb(dataArr, db, tableName, callback) {
+  // Generate ids for them and prepare in format batchWrite function
+  let batchWriteItems = [];
+  for(var i = 0; i < dataArr.length; ++i) {
+    // Prepare the items for insertion into the dynamo db
+    let item = JSON.parse(JSON.stringify(dataArr[i]));
+    item.id = uuid.v1();
+    let ddbItem = {
+      PutRequest: {
+        Item: item
+      }
+    }
+    batchWriteItems.push(ddbItem)
+  }
+
+  let params = {
+    RequestItems: {}
+  };
+  params.RequestItems[tableName] = batchWriteItems;
+
+  // write the todo to the database
+  // dynamoDb.put(params, (error) => {
+  db.batchWrite(params, (err, data) => {
+    callback(err);
+  });
+
+}
+module.exports.writeDataToDb = writeDataToDb;
+
 module.exports.add = (event, context, callback) => {
   const data = JSON.parse(event.body);
   const dataCheck = isValidData(data);
@@ -130,33 +169,15 @@ module.exports.add = (event, context, callback) => {
     return;
   }
 
-  callback(null, {
-    statusCode: 400,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({"success": true})
-  })
+  const dataAsArr = convertDataToArrays(data);
 
-  const itemsToWrite = convertDatatoArrays(data);
-
-
-  return;
-
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE,
-    Item: {
-      obj
-    }
-  };
-
-  // write the todo to the database
-  dynamoDb.put(params, (error) => {
-    // handle potential errors
+  writeDataToDb(dataAsArr, dynamoDb, process.env.DYNAMODB_TABLE, (error) => {
     if (error) {
       console.error(error);
       callback(null, {
         statusCode: error.statusCode || 501,
         headers: { 'Content-Type': 'text/plain' },
-        body: 'Couldn\'t create the todo item.',
+        body: 'Could not write the weather data.',
       });
       return;
     }
@@ -168,4 +189,5 @@ module.exports.add = (event, context, callback) => {
     };
     callback(null, response);
   });
+
 };
