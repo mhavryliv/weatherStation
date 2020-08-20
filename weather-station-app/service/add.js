@@ -1,19 +1,9 @@
 'use strict';
-
 const uuid = require('uuid');
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
-const IS_OFFLINE = process.env.IS_OFFLINE;
-
-let dynamoDb;
-if(IS_OFFLINE === 'true') {
-  dynamoDb = new AWS.DynamoDB.DocumentClient({
-    region: 'localhost',
-    endpoint: 'http://localhost:8000',
-  });
-}
-else {
-  dynamoDb = new AWS.DynamoDB.DocumentClient();
-}
+const mdb = require('./mclient.js');
+// for testing, expose the mdb
+module.exports.mdb = mdb;
 
 function isValidData(data) {
   if(!data) {
@@ -127,32 +117,17 @@ function convertDataToArrays(data) {
 }
 module.exports.convertDataToArrays = convertDataToArrays;
 
-function writeDataToDb(dataArr, db, tableName, callback) {
-  // Generate ids for them and prepare in format batchWrite function
-  let batchWriteItems = [];
-  for(var i = 0; i < dataArr.length; ++i) {
-    // Prepare the items for insertion into the dynamo db
-    let item = JSON.parse(JSON.stringify(dataArr[i]));
-    item.id = uuid.v1();
-    let ddbItem = {
-      PutRequest: {
-        Item: item
-      }
-    }
-    batchWriteItems.push(ddbItem)
+async function writeDataToDb(dataArr) {
+  try {
+    await mdb.checkConn();
+    const events = mdb.db().collection(mdb.eventCollection);
+    await events.insertMany(dataArr);
+    return Promise.resolve();
   }
-
-  let params = {
-    RequestItems: {}
-  };
-  params.RequestItems[tableName] = batchWriteItems;
-
-  // write the todo to the database
-  // dynamoDb.put(params, (error) => {
-  db.batchWrite(params, (err, data) => {
-    callback(err);
-  });
-
+  catch(e) {
+    console.log("Error writing to db: " + e);
+    return Promise.reject(e);
+  }
 }
 module.exports.writeDataToDb = writeDataToDb;
 
@@ -171,7 +146,7 @@ module.exports.add = (event, context, callback) => {
 
   const dataAsArr = convertDataToArrays(data);
 
-  writeDataToDb(dataAsArr, dynamoDb, process.env.DYNAMODB_TABLE, (error) => {
+  writeDataToDb(dataAsArr, db, (error) => {
     if (error) {
       console.error(error);
       callback(null, {

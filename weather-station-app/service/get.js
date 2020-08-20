@@ -1,35 +1,29 @@
 'use strict';
 
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
+const mdb = require('./mclient.js');
+// for testing, expose the mdb
+module.exports.mdb = mdb;
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+async function getEventWithTime(time) {
+  try {
+    await mdb.checkConn();
+    const events = mdb.db().collection(mdb.eventCollection);
+    const theEvent = await events.findOne({time: time})
+    return Promise.resolve(theEvent);
+  }
+  catch(e) {
+    return Promise.reject(e);
+  }
+
+}
+module.exports.getEventWithTime = getEventWithTime;
 
 module.exports.get = (event, context, callback) => {
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE,
-    Key: {
-      id: event.pathParameters.id,
-    },
+  // create a response
+  const response = {
+    statusCode: 200,
+    body: JSON.stringify(result.Item),
   };
-
-  // fetch todo from the database
-  dynamoDb.get(params, (error, result) => {
-    // handle potential errors
-    if (error) {
-      console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: { 'Content-Type': 'text/plain' },
-        body: 'Couldn\'t fetch the todo item.',
-      });
-      return;
-    }
-
-    // create a response
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify(result.Item),
-    };
-    callback(null, response);
-  });
+  callback(null, response);
 };

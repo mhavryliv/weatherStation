@@ -1,4 +1,5 @@
 const addHandler = require('../service/add');
+const getHandler = require('../service/get');
 const badData = require('./badData.json');
 const goodDataPath = __dirname + "/goodData.json";
 
@@ -10,13 +11,6 @@ app.use(bodyParser.json())
 
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
 const IS_OFFLINE = process.env.IS_OFFLINE;
-
-// Setup the dynamodb ref for local testing
-let dynamoDb;
-dynamoDb = new AWS.DynamoDB.DocumentClient({
-  region: 'localhost',
-  endpoint: 'http://localhost:8000',
-});
 
 // Set the timeout to 10 sec to wait for post data from weather station
 jest.setTimeout(10000);
@@ -111,7 +105,6 @@ test('Data conversion test', () => {
   // Treat wind times separately.
   if(originalData.wind_clicks.length !== 0) {
     const originalClicks = originalData.wind_clicks;
-    console.log(originalClicks);
     const startTime = arrData[0].time;
     const interval = originalData.interval;
     for(var i = 0; i < originalClicks.length; ++i) {
@@ -119,25 +112,32 @@ test('Data conversion test', () => {
       const testItemIndex = Math.floor(compareValue / interval);
       // Adjust the comparevalue to account for the start time
       compareValue -= (testItemIndex*interval);
-      // console.log("Looking for index: " + testItemIndex);
-      // console.log(arrData[testItemIndex]);
-
       expect(arrData[testItemIndex].wind_clicks.indexOf(compareValue)).not.toBe(-1);
     }
   }
-
 })
 
-test('Data write test', () => {
+test('Data write test', async (done) => {
   // Extract the actual data out of the original goodData http req
   const originalData = goodData.body;
   // Get the array data
   const arrData = addHandler.convertDataToArrays(originalData);
 
-  addHandler.writeDataToDb(arrData, dynamoDb, "weather-station-service-dev", (err) => {
-    expect(err).toBeNull();
-    // And add a test to read it back and make sure
-  })
+  // Try retrieving the first of the events
+  const timeStampToRetrieve = arrData[0].time;
+
+  try {
+    let writeRes = await addHandler.writeDataToDb(arrData);
+    let event = await getHandler.getEventWithTime(timeStampToRetrieve);
+    expect(arrData[0].temperature).toBe(event.temperature);
+    expect(arrData[0].pressure).toBe(event.pressure);
+    expect(arrData[0].humidity).toBe(event.humidity);
+  }
+  catch(e) {
+    expect(e).toBeNull();
+  }
+  addHandler.mdb.closeConn();
+  done();
 })
 
 

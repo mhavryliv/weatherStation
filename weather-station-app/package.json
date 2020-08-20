@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.720.0",
+    "mongodb": "^3.6.0",
     "serverless": "^1.77.1",
     "serverless-dynamodb-local": "^0.2.39",
     "serverless-http": "^2.5.0",
@@ -19,8 +20,6 @@
     "serverless-jest-plugin": "^0.3.0"
   },
   "scripts": {
-    "test": "sls invoke test",
-    "addnodata": "serverless invoke local -f add",
-    "adddata": "serverless invoke local -f add -p __tests__/goodData.json"
+    "test": "OFFLINE=true sls invoke test"
   }
 }
