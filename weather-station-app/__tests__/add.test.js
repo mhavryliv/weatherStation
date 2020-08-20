@@ -136,16 +136,28 @@ test('Data write test', async (done) => {
   catch(e) {
     expect(e).toBeNull();
   }
-  finally{
-    // Close the database connection
-    addHandler.mdb.closeConn();
-  }
-
   done();
 })
 
 
+test('Data read test', async (done) => {
+  try {
+    const allData = await getHandler.getAllEvents();
+    const arrLen = allData.length;
+    expect(arrLen).not.toBe(0);
+    console.log(arrLen + " events");
+  }
+  catch(e) {
+    expect(e).toBeNull();
+  }
+  done();
 
+})
+
+afterAll(() => {
+  // Close the database connection
+  addHandler.mdb.closeConn();
+})
 
 
 

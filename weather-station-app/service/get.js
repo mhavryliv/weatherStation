@@ -15,9 +15,19 @@ async function getEventWithTime(time) {
   catch(e) {
     return Promise.reject(e);
   }
-
 }
 module.exports.getEventWithTime = getEventWithTime;
+
+async function getAllEvents() {
+  try {
+    let all = await mdb.db().collection(mdb.eventCollection).find().toArray();
+    return Promise.resolve(all);
+  }
+  catch(e) {
+    return Promise.reject(e);
+  }
+}
+module.exports.getAllEvents = getAllEvents;
 
 module.exports.get = (event, context, callback) => {
   // create a response
