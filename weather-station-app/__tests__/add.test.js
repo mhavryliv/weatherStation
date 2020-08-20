@@ -136,9 +136,14 @@ test('Data write test', async (done) => {
   catch(e) {
     expect(e).toBeNull();
   }
-  addHandler.mdb.closeConn();
+  finally{
+    // Close the database connection
+    addHandler.mdb.closeConn();
+  }
+
   done();
 })
+
 
 
 
