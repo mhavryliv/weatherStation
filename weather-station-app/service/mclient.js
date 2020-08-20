@@ -1,4 +1,4 @@
-const IS_OFFLINE = process.env.IS_OFFLINE;
+var IS_OFFLINE = process.env.IS_OFFLINE === '1';
 const MongoClient = require('mongodb').MongoClient;
 const mongoUser = "mark";
 const mongoDbName = "weather-service";

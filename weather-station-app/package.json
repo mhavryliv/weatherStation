@@ -20,6 +20,7 @@
     "serverless-jest-plugin": "^0.3.0"
   },
   "scripts": {
-    "test": "OFFLINE=true sls invoke test"
+    "test": "OFFLINE=1 sls invoke test",
+    "testRemote": "OFFLINE=0 sls invoke test"
   }
 }
