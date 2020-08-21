@@ -17,7 +17,8 @@ else {
 console.log("Connecting to: " + mongoConnStr);
 
 const client = new MongoClient(mongoConnStr, {
-  useNewUrlParser: true
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 });
 let db;
 

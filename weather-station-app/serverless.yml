@@ -47,15 +47,6 @@ functions:
           path: add
           method: post
           cors: true
-
-  # list:
-  #   handler: service/list.list
-  #   events:
-  #     - http:
-  #         path: list
-  #         method: get
-  #         cors: true
-
   get:
     handler: service/get.get
     events:

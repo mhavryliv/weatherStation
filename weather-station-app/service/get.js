@@ -50,7 +50,7 @@ async function getEventsInTimeRange(startTime, endTime) {
 }
 module.exports.getEventsInTimeRange = getEventsInTimeRange;
 
-module.exports.get = async (event, context, callback) => {
+module.exports.get = async (event, context) => {
   const data = JSON.parse(event.body);
   let response = {
     statusCode: 200,
@@ -77,5 +77,5 @@ module.exports.get = async (event, context, callback) => {
       'err': e.message
     })
   }
-  callback(null, response);
+  return response;
 };

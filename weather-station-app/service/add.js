@@ -130,7 +130,7 @@ async function writeDataToDb(dataArr) {
 }
 module.exports.writeDataToDb = writeDataToDb;
 
-module.exports.add = async (event, context, callback) => {
+module.exports.add = async (event, context) => {
   const data = JSON.parse(event.body);
   const dataCheck = isValidData(data);
 
@@ -149,11 +149,11 @@ module.exports.add = async (event, context, callback) => {
   }
   catch(error) {
     console.error(error);
-    return callback(null, {
+    return {
       statusCode: error.statusCode || 501,
       headers: { 'Content-Type': 'text/plain' },
       body: 'Could not write the weather data.',
-    });
+    };
   }
 
   // create a response
@@ -163,5 +163,5 @@ module.exports.add = async (event, context, callback) => {
       addedEvents: dataAsArr
     })
   };
-  return callback(null, response);
+  return response;
 };
