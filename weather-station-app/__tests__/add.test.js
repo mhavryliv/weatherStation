@@ -145,13 +145,20 @@ test('Data read test', async (done) => {
     const allData = await getHandler.getAllEvents();
     const arrLen = allData.length;
     expect(arrLen).not.toBe(0);
-    console.log(arrLen + " events");
+    
+    // Get a range
+    const firstTime = allData[1].time;
+    const secondTime = allData[2].time;
+    const rangeData = await getHandler.getEventsInTimeRange(firstTime, secondTime);
+    const rangeLen = rangeData.length;
+    expect(rangeLen).toBe(2);
+    expect(rangeData[0].id).toBe(allData[1].id);
+    expect(rangeData[1].id).toBe(allData[2].id);
   }
   catch(e) {
     expect(e).toBeNull();
   }
   done();
-
 })
 
 afterAll(() => {

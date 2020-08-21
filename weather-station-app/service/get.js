@@ -31,6 +31,25 @@ async function getAllEvents() {
 }
 module.exports.getAllEvents = getAllEvents;
 
+async function getEventsInTimeRange(startTime, endTime) {
+  try {
+    if(!endTime) {
+      endTime = Date.now()
+    }
+    if(!startTime) {
+      startTime = 1;
+    }
+    await mdb.checkConn();
+    const events = mdb.db().collection(mdb.eventCollection);
+    let rangeEvents = await events.find({time: {$gte: startTime, $lte: endTime}}).toArray();
+    return Promise.resolve(rangeEvents);
+  }
+  catch(e) {
+    return Promise.reject(e);
+  }
+}
+module.exports.getEventsInTimeRange = getEventsInTimeRange;
+
 module.exports.get = async (event, context, callback) => {
   const data = JSON.parse(event.body);
   let response = {
@@ -43,10 +62,13 @@ module.exports.get = async (event, context, callback) => {
       retData = await getAllEvents();
       response.body = JSON.stringify(retData);
     }
-    else {
+    else if(!data.startRange){
       response.body = JSON.stringify({
         'err': "No date range specified"
       })
+    }
+    else {
+
     }
   }
   catch(e) {
