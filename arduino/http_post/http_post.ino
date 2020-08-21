@@ -22,7 +22,8 @@ const char* password = "unisux12";
 Adafruit_BME280 bme; // I2C
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.86.121:9876/weather_data_up";
+//String serverName = "http://192.168.86.121:9876/weather_data_up";
+String serverName = "https://weatherreporting.flyingaspidistra.net/add";
 
 const bool isDoingWifi = true;
 // Wifi sending interval (msec)
@@ -337,8 +338,9 @@ void sendHttpReq() {
     if (httpResponseCode > 0) {
 //        Serial.print("HTTP Response code: ");
 //        Serial.println(httpResponseCode);
-//        String payload = http.getString();
-//        Serial.println(payload);
+        String payload = http.getString();
+        Serial.print("HTTP Response: ");
+        Serial.println(payload);
     }
     else {
       // Don't bother printing if server is unreachable

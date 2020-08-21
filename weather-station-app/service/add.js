@@ -160,7 +160,7 @@ module.exports.add = async (event, context) => {
   const response = {
     statusCode: 200,
     body: JSON.stringify({
-      addedEvents: dataAsArr
+      addEventCount: dataAsArr.length
     })
   };
   return response;
