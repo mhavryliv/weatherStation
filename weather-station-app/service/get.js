@@ -57,10 +57,9 @@ module.exports.get = async (event, context, callback) => {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
-    let retData = {};
     if(data.getAll) {
-      retData = await getAllEvents();
-      response.body = JSON.stringify(retData);
+      const allData = await getAllEvents();
+      response.body = JSON.stringify(allData);
     }
     else if(!data.startRange){
       response.body = JSON.stringify({
@@ -68,7 +67,8 @@ module.exports.get = async (event, context, callback) => {
       })
     }
     else {
-
+      const rangeData = await getEventsInTimeRange(data.startRange, data.endRange);
+      response.body = JSON.stringify(rangeData);
     }
   }
   catch(e) {
