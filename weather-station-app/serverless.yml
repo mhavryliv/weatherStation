@@ -21,9 +21,13 @@ org: markh
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
+package:
+  excludeDevDependencies: false
+
 plugins:
+  - serverless-plugin-include-dependencies
   - serverless-jest-plugin
-  - serverless-dynamodb-local
+  # - serverless-dynamodb-local
   - serverless-offline #should be last in list
 
 provider:

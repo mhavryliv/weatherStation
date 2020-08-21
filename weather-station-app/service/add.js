@@ -1,6 +1,5 @@
 'use strict';
 const uuid = require('uuid');
-const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
 const mdb = require('./mclient.js');
 // for testing, expose the mdb
 module.exports.mdb = mdb;
@@ -131,7 +130,7 @@ async function writeDataToDb(dataArr) {
 }
 module.exports.writeDataToDb = writeDataToDb;
 
-module.exports.add = (event, context, callback) => {
+module.exports.add = async (event, context, callback) => {
   const data = JSON.parse(event.body);
   const dataCheck = isValidData(data);
 
@@ -145,24 +144,24 @@ module.exports.add = (event, context, callback) => {
   }
 
   const dataAsArr = convertDataToArrays(data);
+  try {
+    await writeDataToDb(dataAsArr);
+  }
+  catch(error) {
+    console.error(error);
+    return callback(null, {
+      statusCode: error.statusCode || 501,
+      headers: { 'Content-Type': 'text/plain' },
+      body: 'Could not write the weather data.',
+    });
+  }
 
-  writeDataToDb(dataAsArr, db, (error) => {
-    if (error) {
-      console.error(error);
-      callback(null, {
-        statusCode: error.statusCode || 501,
-        headers: { 'Content-Type': 'text/plain' },
-        body: 'Could not write the weather data.',
-      });
-      return;
-    }
-
-    // create a response
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify(params.Item),
-    };
-    callback(null, response);
-  });
-
+  // create a response
+  const response = {
+    statusCode: 200,
+    body: JSON.stringify({
+      addedEvents: dataAsArr
+    })
+  };
+  return callback(null, response);
 };
