@@ -21,6 +21,7 @@
   },
   "scripts": {
     "test": "OFFLINE=1 sls invoke test",
-    "testRemote": "OFFLINE=0 sls invoke test"
+    "testRemote": "OFFLINE=0 sls invoke test",
+    "local": "OFFLINE=1 sls offline"
   }
 }

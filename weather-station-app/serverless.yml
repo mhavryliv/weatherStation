@@ -44,18 +44,18 @@ functions:
           method: post
           cors: true
 
-  list:
-    handler: service/list.list
-    events:
-      - http:
-          path: list
-          method: get
-          cors: true
+  # list:
+  #   handler: service/list.list
+  #   events:
+  #     - http:
+  #         path: list
+  #         method: get
+  #         cors: true
 
   get:
     handler: service/get.get
     events:
       - http:
-          path: events/{id}
-          method: get
+          path: events
+          method: post
           cors: true

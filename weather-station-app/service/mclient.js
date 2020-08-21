@@ -1,4 +1,4 @@
-var IS_OFFLINE = process.env.IS_OFFLINE === '1';
+var IS_OFFLINE = (process.env.IS_OFFLINE === '1') || (process.env.IS_OFFLINE === 'true');
 const MongoClient = require('mongodb').MongoClient;
 const mongoUser = "mark";
 const mongoDbName = "weather-service";
@@ -7,7 +7,7 @@ const mongoPass = "unisux";
 let mongoConnStr;
 
 if(IS_OFFLINE) {
-  mongoConnStr = "mongodb://localhost:27017" + mongoDbName;
+  mongoConnStr = "mongodb://localhost:27017/" + mongoDbName;
 }
 else {
   mongoConnStr = "mongodb+srv://" + mongoUser + ":" + mongoPass
