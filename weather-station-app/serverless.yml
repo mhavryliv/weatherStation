@@ -25,10 +25,19 @@ package:
   excludeDevDependencies: false
 
 plugins:
+  - serverless-domain-manager
   - serverless-plugin-include-dependencies
   - serverless-jest-plugin
   # - serverless-dynamodb-local
   - serverless-offline #should be last in list
+
+
+custom:
+  customDomain:
+    domainName: weatherreporting.flyingaspidistra.net
+    basePath: ''
+    stage: ${self:provider.stage}
+    createRoute53Record: true
 
 provider:
   name: aws
