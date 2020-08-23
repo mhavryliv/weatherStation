@@ -9,9 +9,9 @@ let clients = [];
 wss.on('connection', function connection(ws) {
   // Add it to the clients
   clients.push(ws);
-  ws.on('message', function incoming(data) {
+  ws.on('message', function incoming(dataStr) {
     // Is this from the weather station? If so make sure we've got the ref
-    data = JSON.parse(data);
+    const data = JSON.parse(dataStr);
     if(data.isWS) {
       if(weatherStation !== ws) {
         console.log("Got a weather station!");
@@ -27,7 +27,7 @@ wss.on('connection', function connection(ws) {
     console.log(data);
     wss.clients.forEach(function each(client) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(data);
+        client.send(dataStr);
       }
     });
   });
