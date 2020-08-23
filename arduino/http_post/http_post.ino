@@ -7,7 +7,7 @@
 #include <Adafruit_BME280.h>
 #include <ESPmDNS.h>
 //#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
+//#include <ArduinoOTA.h>
 
 #include <ArduinoWebsockets.h>
 #include <WiFi.h>
@@ -23,7 +23,7 @@ const char* password = "unisux12";
 Adafruit_BME280 bme; // I2C
 
 //Your Domain name with URL path or IP address with path
-//String serverName = "http://192.168.86.121:9876/weather_data_up";
+//String serverName = "http://192.168.86.121:9876/add";
 String serverName = "https://weatherreporting.flyingaspidistra.net/add";
 
 const bool isDoingWifi = true;
@@ -38,6 +38,9 @@ const int WIND_FRAME_SIZE = 2000; // set this to 3 seconds to allow for very slo
 volatile unsigned long lastWindClick;
 volatile unsigned long shortestWindClickInterval;
 volatile MovAvg windSpeedAvg(5);
+// Variables for sending over WS
+volatile bool hadWindClick;
+String lastWindDir = "N";
 
 // The normalised values output by the wind direction vane, clockwise from North
 const int WIND_DIR_LEN = 8;
@@ -49,6 +52,7 @@ const int waterInputPin = 17;
 const int WATER_DEBOUNCE_MSEC = 80;
 volatile unsigned long waterClickCount = 0;
 volatile unsigned long lastWaterClick = 0;
+volatile bool hadWaterClick;
 
 // Data to send over HTTP
 const int NUM_DATA_POINTS = WIFI_INTERVAL / WIND_FRAME_SIZE;
@@ -63,6 +67,13 @@ double pressure;
 double humidity;
 unsigned long lastBMERead;
 const unsigned long bmeReadDelay = 60000;
+
+// Websocket
+const char* websockets_server_host = "3.105.228.57"; //Enter server adress
+const uint16_t websockets_server_port = 8123; // Enter server port
+StaticJsonDocument<200> wsdoc;  // the websocket json document, don't rebuilt it all the time
+using namespace websockets;
+WebsocketsClient client;
 
 void setup() {
   Serial.begin(115200);
@@ -98,6 +109,17 @@ void setup() {
                   Adafruit_BME280::SAMPLING_X1, // humidity
                   Adafruit_BME280::FILTER_OFF   );
 
+  // Websocket init
+  bool connected = client.connect(websockets_server_host, websockets_server_port, "/");
+  if(connected) {
+      String wsString = createJsonForWs(false, "N", false);
+      client.send(wsString);
+      Serial.print("WS connected to ");
+      Serial.println(websockets_server_host);
+  } else {
+      Serial.println("WS not connected");
+  }
+
   setupInputPins();
 
   // Setup counter for tracking when to send WIFI data
@@ -108,11 +130,13 @@ void setup() {
   windClickCount = 0;
   frameStartTime = 0;
   lastBMERead = 0;
+  hadWindClick = false;
+  hadWaterClick = false;
 }
 
 void loop() {
   if(isDoingWifi) {
-    ArduinoOTA.handle();
+//    ArduinoOTA.handle();
   } 
   frameStartTime = millis();
   // Do calculations on collected data
@@ -136,7 +160,38 @@ void loop() {
 
   // Clear wind click params for this cycle before sleeping
   shortestWindClickInterval = WIND_FRAME_SIZE;
-  delay(WIND_FRAME_SIZE);
+//  delay(WIND_FRAME_SIZE);
+  // Instead of sleeping, let's loop so we can check for wind clicks
+  const unsigned long targetTime = frameStartTime + WIND_FRAME_SIZE;
+  if(client.available()) {
+    while(millis() < targetTime) {
+      // If the flag is true, send a websocket msg
+      if(hadWindClick || hadWaterClick) {
+        String msg = createJsonForWs(hadWindClick, lastWindDir, hadWaterClick);
+        client.send(msg);
+      }
+      // reset the flags
+      hadWindClick = false;
+      hadWaterClick = false;
+      delay(1);
+    }
+  }
+  else {
+    Serial.println("WS offline, will try reconnecting");
+    bool didConnect = client.connect(websockets_server_host, websockets_server_port, "/");
+    if(didConnect) {
+      String wsString = createJsonForWs(false, "N", false);
+      client.send(wsString);
+      Serial.println("Reconnected!");
+    }
+    while(millis() < targetTime) {
+      delay(1);
+    }
+  }
+  // Send a ws msg for testing
+  String msg = createJsonForWs(false, lastWindDir, false);
+  client.send(msg);
+
 }
 
 void getTemperatureData() {
@@ -198,6 +253,7 @@ void calculateWindDir() {
     }
   }
   windDir[dataSetCounter] = windDirNames[closestIndex];
+  lastWindDir = windDirNames[closestIndex];
 //  Serial.println("Wind dir is: " + windDir);
 }
 
@@ -218,6 +274,9 @@ void handleWindClick() {
   windClickCount++;
   // Add the diff to our moving average
   windSpeedAvg.addVal(diff);
+
+  // Set the wind click flag
+  hadWindClick = true;
 }
 
 void handleWaterClick() {
@@ -228,7 +287,7 @@ void handleWaterClick() {
   }
   lastWaterClick = thisTime;
   waterClickCount++;
-//  Serial.println("Water click: " + String(waterClickCount));
+  hadWaterClick = true;
 }
 
 void setupInputPins() {
@@ -253,41 +312,41 @@ void setupWifi() {
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-  Serial.println("Setting up OTA");
-  // Setup the OTA programming
-   ArduinoOTA.setPort(3232);
-   ArduinoOTA.setHostname("weather_station_arduino_1");
-   ArduinoOTA.setPassword("unisux");
-
-  ArduinoOTA
-    .onStart([]() {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
-
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
-
-  ArduinoOTA.begin();
-
-  Serial.println("OTA ready on port 3232");
+//  Serial.println("Setting up OTA");
+//  // Setup the OTA programming
+//   ArduinoOTA.setPort(3232);
+//   ArduinoOTA.setHostname("weather_station_arduino_1");
+//   ArduinoOTA.setPassword("unisux");
+//
+//  ArduinoOTA
+//    .onStart([]() {
+//      String type;
+//      if (ArduinoOTA.getCommand() == U_FLASH)
+//        type = "sketch";
+//      else // U_SPIFFS
+//        type = "filesystem";
+//
+//      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+//      Serial.println("Start updating " + type);
+//    })
+//    .onEnd([]() {
+//      Serial.println("\nEnd");
+//    })
+//    .onProgress([](unsigned int progress, unsigned int total) {
+//      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+//    })
+//    .onError([](ota_error_t error) {
+//      Serial.printf("Error[%u]: ", error);
+//      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+//      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+//      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+//      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+//      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+//    });
+//
+//  ArduinoOTA.begin();
+//
+//  Serial.println("OTA ready on port 3232");
 }
 
 // Creates a JSON object out of required data, and returns as serialised string.
@@ -316,6 +375,14 @@ String createJsonDoc() {
   return doc.as<String>();
 }
 
+String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick) {
+  wsdoc["isWS"] = true;
+  wsdoc["windclick"] = isWindClick;
+  wsdoc["wdir"] = windDir;
+  wsdoc["waterclick"] = isWaterClick;
+  return wsdoc.as<String>();
+}
+
 void sendHttpReq() {  
   if(!isDoingWifi) {
     return;
@@ -339,9 +406,9 @@ void sendHttpReq() {
     if (httpResponseCode > 0) {
 //        Serial.print("HTTP Response code: ");
 //        Serial.println(httpResponseCode);
-        String payload = http.getString();
-        Serial.print("HTTP Response: ");
-        Serial.println(payload);
+//        String payload = http.getString();
+//        Serial.print("HTTP Response: ");
+//        Serial.println(payload);
     }
     else {
       // Don't bother printing if server is unreachable

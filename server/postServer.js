@@ -5,7 +5,7 @@ var bodyParser = require('body-parser')
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
-app.post('/weather_data_up', (req, res) => {
+app.post('/add', (req, res) => {
   const data = req.body;
   const timestamp = Date.now();
   const samplingInterval = data.interval;
