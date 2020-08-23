@@ -6,9 +6,10 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <ESPmDNS.h>
-#include <WiFiUdp.h>
+//#include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+#include <ArduinoWebsockets.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
