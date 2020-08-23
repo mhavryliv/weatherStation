@@ -63,6 +63,19 @@ async function getEventsInTimeRange(startTime, endTime) {
 }
 module.exports.getEventsInTimeRange = getEventsInTimeRange;
 
+async function getEventsForLastSeconds(numSecondsBack) {
+  // Get the current time
+  const curTime = Date.now();
+  const startTime = curTime - (numSecondsBack * 1000);
+  try {
+    let events = await getEventsInTimeRange(startTime);
+    return Promise.resolve(events);
+  }
+  catch(e) {
+    return Promise.reject(e);
+  }
+}
+
 module.exports.get = async (event, context) => {
   const data = JSON.parse(event.body);
   let response = {
@@ -70,23 +83,33 @@ module.exports.get = async (event, context) => {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
+    let retEvents;
     if(data.getAll) {
-      const allData = await getAllEvents();
-      response.body = JSON.stringify(allData);
+      retEvents = await getAllEvents();
     }
     else if(data.getCurrent) {
-      const lastEvent = await getLastEvent();
-      response.body = JSON.stringify(lastEvent);
+      const event = await getLastEvent();
+      retEvents.push(event);
     }
-    else if(!data.startRange){
-      response.body = JSON.stringify({
-        'err': "No date range specified"
-      })
+    else if(data.getPastSeconds) {
+      retEvents = await getEventsForLastSeconds(data.getPastSeconds);
+    }
+    else if(data.startRange) {
+      retEvents = await getEventsInTimeRange(data.startRange, data.endRange);
     }
     else {
-      const rangeData = await getEventsInTimeRange(data.startRange, data.endRange);
-      response.body = JSON.stringify(rangeData);
+      retEvents = {
+        "err": "Don't know what data to return"
+      }
     }
+
+    // If the data doesn't want wind clicks, remove it
+    if(!data.windClicks) {
+      for(var i = 0; i < retEvents.length; ++i) {
+        retEvents[i].wind_clicks = undefined;
+      }
+    }
+    response.body = JSON.stringify(retEvents);
   }
   catch(e) {
     response.statusCode = 400;
