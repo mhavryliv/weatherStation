@@ -31,6 +31,19 @@ async function getAllEvents() {
 }
 module.exports.getAllEvents = getAllEvents;
 
+async function getLastEvent() {
+  try {
+    await mdb.checkConn();
+    const events = mdb.db().collection(mdb.eventCollection);
+    let lastEvent = await events.find().limit(1).sort({$natural:-1}).toArray();
+    return Promise.resolve(lastEvent[0]);
+  }
+  catch(e) {
+    return Promise.reject(e)
+  }
+}
+module.exports.getLastEvent = getLastEvent;
+
 async function getEventsInTimeRange(startTime, endTime) {
   try {
     if(!endTime) {
@@ -60,6 +73,10 @@ module.exports.get = async (event, context) => {
     if(data.getAll) {
       const allData = await getAllEvents();
       response.body = JSON.stringify(allData);
+    }
+    else if(data.getCurrent) {
+      const lastEvent = await getLastEvent();
+      response.body = JSON.stringify(lastEvent);
     }
     else if(!data.startRange){
       response.body = JSON.stringify({

@@ -151,9 +151,16 @@ test('Data read test', async (done) => {
     const secondTime = allData[2].time;
     const rangeData = await getHandler.getEventsInTimeRange(firstTime, secondTime);
     const rangeLen = rangeData.length;
+    console.log(allData[1]);
     expect(rangeLen).toBe(2);
-    expect(rangeData[0].id).toBe(allData[1].id);
-    expect(rangeData[1].id).toBe(allData[2].id);
+    expect(rangeData[0]._id.str).toBe(allData[1]._id.str);
+    expect(rangeData[1]._id.str).toBe(allData[2]._id.str);
+
+    // test the get last event
+    const lastEvent = await getHandler.getLastEvent();
+    console.log(lastEvent._id);
+    console.log(allData[arrLen - 1]._id);
+    expect(lastEvent._id.str).toBe(allData[arrLen - 1]._id.str);
   }
   catch(e) {
     expect(e).toBeNull();
