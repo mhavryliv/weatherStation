@@ -88,8 +88,7 @@ module.exports.get = async (event, context) => {
       retEvents = await getAllEvents();
     }
     else if(data.getCurrent) {
-      const event = await getLastEvent();
-      retEvents.push(event);
+      retEvents = [await getLastEvent()];
     }
     else if(data.getPastSeconds) {
       retEvents = await getEventsForLastSeconds(data.getPastSeconds);
