@@ -23,6 +23,10 @@ wss.on('connection', function connection(ws) {
         }
       }
     }
+    else {
+      // Do nothing if it's not from the weather station
+      return;
+    }
     // Broadcast message to all clients
     console.log(data);
     wss.clients.forEach(function each(client) {
