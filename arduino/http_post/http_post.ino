@@ -69,9 +69,9 @@ unsigned long lastBMERead;
 const unsigned long bmeReadDelay = 60000;
 
 // Websocket
-const char* websockets_server_host = "3.105.228.57"; //Enter server adress
+const char* websockets_server_host = "realtimeweather-molly1.flyingaspidistra.net"; //Enter server adress
 const uint16_t websockets_server_port = 8123; // Enter server port
-StaticJsonDocument<200> wsdoc;  // the websocket json document, don't rebuilt it all the time
+StaticJsonDocument<400> wsdoc;  // the websocket json document, don't rebuilt it all the time
 using namespace websockets;
 WebsocketsClient client;
 
@@ -112,7 +112,7 @@ void setup() {
   // Websocket init
   bool connected = client.connect(websockets_server_host, websockets_server_port, "/");
   if(connected) {
-      String wsString = createJsonForWs(false, "N", false);
+      String wsString = createJsonForWs(false, "N", false, false);
       client.send(wsString);
       Serial.print("WS connected to ");
       Serial.println(websockets_server_host);
@@ -167,7 +167,7 @@ void loop() {
     while(millis() < targetTime) {
       // If the flag is true, send a websocket msg
       if(hadWindClick || hadWaterClick) {
-        String msg = createJsonForWs(hadWindClick, lastWindDir, hadWaterClick);
+        String msg = createJsonForWs(hadWindClick, lastWindDir, hadWaterClick, false);
         client.send(msg);
       }
       // reset the flags
@@ -180,7 +180,7 @@ void loop() {
     Serial.println("WS offline, will try reconnecting");
     bool didConnect = client.connect(websockets_server_host, websockets_server_port, "/");
     if(didConnect) {
-      String wsString = createJsonForWs(false, "N", false);
+      String wsString = createJsonForWs(false, "N", false, false);
       client.send(wsString);
       Serial.println("Reconnected!");
     }
@@ -188,10 +188,9 @@ void loop() {
       delay(1);
     }
   }
-  // Send a ws msg for testing
-  String msg = createJsonForWs(false, lastWindDir, false);
+  // Send a ws msg every loop as a proof of life, and send atmospheric data
+  String msg = createJsonForWs(false, lastWindDir, false, true);
   client.send(msg);
-
 }
 
 void getTemperatureData() {
@@ -375,11 +374,17 @@ String createJsonDoc() {
   return doc.as<String>();
 }
 
-String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick) {
+String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick, bool includeAtmospheric) {
   wsdoc["isWS"] = true;
   wsdoc["windclick"] = isWindClick;
   wsdoc["wdir"] = windDir;
   wsdoc["waterclick"] = isWaterClick;
+  wsdoc["time"] = millis();
+  if(includeAtmospheric) {
+    wsdoc["temp"] = temperature;
+    wsdoc["humidity"] = humidity;
+    wsdoc["pressure"] = pressure;  
+  }
   return wsdoc.as<String>();
 }
 

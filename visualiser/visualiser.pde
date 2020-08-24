@@ -24,7 +24,6 @@ void webSocketEvent(String msg){
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
-  
   if(isWaterClick) {
     println("Water!!!");
   }
