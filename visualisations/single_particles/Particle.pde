@@ -59,7 +59,8 @@ class Particle {
     lifespan = lifespan - 1;
     velocity.add(gravity);
     
-    part.setTint(color(255,lifespan));
+    //part.setTint(color(255,lifespan));
+    part.setTint(color(240, 94, 27, lifespan));
     part.translate(velocity.x, velocity.y);
   }
 }
