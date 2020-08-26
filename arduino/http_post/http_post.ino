@@ -1,4 +1,4 @@
-// Developing on the Wemos Pro ESP32esp32 
+// Developing on the Wemos Pro ESP32esp32
 // Test input pin GPIO 16
 // Includes for BME 280 sensor
 #include <Wire.h>
@@ -23,8 +23,8 @@ const char* password = "unisux12";
 Adafruit_BME280 bme; // I2C
 
 //Your Domain name with URL path or IP address with path
-//String serverName = "http://192.168.86.121:9876/add";
-String serverName = "https://weatherreporting.flyingaspidistra.net/add";
+String serverName = "http://192.168.86.121:9876/add";
+//String serverName = "https://weatherreporting.flyingaspidistra.net/add";
 
 const bool isDoingWifi = true;
 // Wifi sending interval (msec)
@@ -83,11 +83,11 @@ void setup() {
 
   // Make sure the wifi send interval is an integer multiple of the data window size
   float numDPointsF = (float)WIFI_INTERVAL / (float)WIND_FRAME_SIZE;
-  if((float)NUM_DATA_POINTS != numDPointsF) {
+  if ((float)NUM_DATA_POINTS != numDPointsF) {
     Serial.println("Warning: Wifi send interval is not a multiple of the data frame size");
   }
-  
-  if(isDoingWifi) {
+
+  if (isDoingWifi) {
     setupWifi();
   }
 
@@ -95,7 +95,7 @@ void setup() {
   unsigned status;
   // default settings
   status = bme.begin();
-  if(!status) {
+  if (!status) {
     Serial.println("Error starting temperature sensor");
     Serial.println("Code is: " + String(status));
   }
@@ -111,13 +111,13 @@ void setup() {
 
   // Websocket init
   bool connected = client.connect(websockets_server_host, websockets_server_port, "/");
-  if(connected) {
-      String wsString = createJsonForWs(false, "N", false, false);
-      client.send(wsString);
-      Serial.print("WS connected to ");
-      Serial.println(websockets_server_host);
+  if (connected) {
+    String wsString = createJsonForWs(false, "N", false, false);
+    client.send(wsString);
+    Serial.print("WS connected to ");
+    Serial.println(websockets_server_host);
   } else {
-      Serial.println("WS not connected");
+    Serial.println("WS not connected");
   }
 
   setupInputPins();
@@ -135,9 +135,9 @@ void setup() {
 }
 
 void loop() {
-  if(isDoingWifi) {
-//    ArduinoOTA.handle();
-  } 
+  if (isDoingWifi) {
+    //    ArduinoOTA.handle();
+  }
   frameStartTime = millis();
   // Do calculations on collected data
   calculateWindSpeed();
@@ -146,8 +146,8 @@ void loop() {
 
   // Reset data set counter if it about to rollover, and send wifi data
   // Also clear the water counter here - don't need to update it every wind frame
-  if(dataSetCounter == (NUM_DATA_POINTS - 1)) {
-    if(isDoingWifi) {
+  if (dataSetCounter == (NUM_DATA_POINTS - 1)) {
+    if (isDoingWifi) {
       sendHttpReq();
     }
     dataSetCounter = 0;
@@ -160,13 +160,13 @@ void loop() {
 
   // Clear wind click params for this cycle before sleeping
   shortestWindClickInterval = WIND_FRAME_SIZE;
-//  delay(WIND_FRAME_SIZE);
+  //  delay(WIND_FRAME_SIZE);
   // Instead of sleeping, let's loop so we can check for wind clicks
   const unsigned long targetTime = frameStartTime + WIND_FRAME_SIZE;
-  if(client.available()) {
-    while(millis() < targetTime) {
+  if (client.available()) {
+    while (millis() < targetTime) {
       // If the flag is true, send a websocket msg
-      if(hadWindClick || hadWaterClick) {
+      if (hadWindClick || hadWaterClick) {
         String msg = createJsonForWs(hadWindClick, lastWindDir, hadWaterClick, false);
         client.send(msg);
       }
@@ -179,12 +179,12 @@ void loop() {
   else {
     Serial.println("WS offline, will try reconnecting");
     bool didConnect = client.connect(websockets_server_host, websockets_server_port, "/");
-    if(didConnect) {
+    if (didConnect) {
       String wsString = createJsonForWs(false, "N", false, false);
       client.send(wsString);
       Serial.println("Reconnected!");
     }
-    while(millis() < targetTime) {
+    while (millis() < targetTime) {
       delay(1);
     }
   }
@@ -195,10 +195,10 @@ void loop() {
 
 void getTemperatureData() {
   // If it's been more than bmeReadDelay since the last temperature measurement, force a new one
-  if(lastBMERead == 0 || ((millis() - lastBMERead) >= bmeReadDelay)) {
+  if (lastBMERead == 0 || ((millis() - lastBMERead) >= bmeReadDelay)) {
     bme.takeForcedMeasurement();
     lastBMERead = millis();
-//    Serial.println("Forcing bme measurement");
+    //    Serial.println("Forcing bme measurement");
     temperature = bme.readTemperature();
     pressure = bme.readPressure() / 100.f;
     humidity = bme.readHumidity();
@@ -207,33 +207,33 @@ void getTemperatureData() {
 
 void calculateWindSpeed() {
   // Calculate the max gust
-  const double invertedQuickestClick = 1.0/(shortestWindClickInterval / 1000.0);
+  const double invertedQuickestClick = 1.0 / (shortestWindClickInterval / 1000.0);
   double curMaxGust = invertedQuickestClick * 2.4;
-  if(shortestWindClickInterval == WIND_FRAME_SIZE) {
+  if (shortestWindClickInterval == WIND_FRAME_SIZE) {
     curMaxGust = 0;
   }
   maxGust[dataSetCounter] = curMaxGust;
-  
+
   // If there have been no clicks for the last window size, the speed is zero.
   double speed;
-  if((millis() - lastWindClick) > WIND_FRAME_SIZE) {
-    speed = 0; 
+  if ((millis() - lastWindClick) > WIND_FRAME_SIZE) {
+    speed = 0;
   }
   else  {
     const double windSpeedAvgVal = windSpeedAvg.getCurAvg();
-    if(windSpeedAvgVal == 0.0) {
+    if (windSpeedAvgVal == 0.0) {
       speed = 0;
     }
     else {
-      const double freq = 1.0/(windSpeedAvg.getCurAvg() / 1000.0);
+      const double freq = 1.0 / (windSpeedAvg.getCurAvg() / 1000.0);
       speed = freq * 2.4;
     }
   }
   // Don't let the speed be higher than the current max gust
   // Actually, this is not a big deal. Still useful to compare the averaged and gust speeds
-//  if(speed > curMaxGust) {
-//    speed = curMaxGust;
-//  }
+  //  if(speed > curMaxGust) {
+  //    speed = curMaxGust;
+  //  }
   windSpeedKMh[dataSetCounter] = speed;
 }
 
@@ -244,16 +244,16 @@ void calculateWindDir() {
   // Find which is the closest value in the wind lookup table
   int closestIndex = 0;
   float closestDiff = 1;
-  for(int i = 0; i < WIND_DIR_LEN; ++i) {
+  for (int i = 0; i < WIND_DIR_LEN; ++i) {
     const float diff = fabs(normalised - windDirOutputVals[i]);
-    if(diff < closestDiff) {
+    if (diff < closestDiff) {
       closestIndex = i;
       closestDiff = diff;
     }
   }
   windDir[dataSetCounter] = windDirNames[closestIndex];
   lastWindDir = windDirNames[closestIndex];
-//  Serial.println("Wind dir is: " + windDir);
+  //  Serial.println("Wind dir is: " + windDir);
 }
 
 // Interrupt handling
@@ -261,11 +261,11 @@ void handleWindClick() {
   // If less than 20 msec has passed since last click, don't count it
   const unsigned long thisTime = millis();
   const unsigned long diff = thisTime - lastWindClick;
-  if(diff < WIND_DEBOUNCE_MSEC) {
+  if (diff < WIND_DEBOUNCE_MSEC) {
     return;
   }
   lastWindClick = thisTime;
-  if(diff < shortestWindClickInterval) {
+  if (diff < shortestWindClickInterval) {
     shortestWindClickInterval = diff;
   }
   // Add it to the array
@@ -281,7 +281,7 @@ void handleWindClick() {
 void handleWaterClick() {
   const unsigned long thisTime = millis();
   const unsigned long diff = thisTime - lastWaterClick;
-  if(diff < WATER_DEBOUNCE_MSEC) {
+  if (diff < WATER_DEBOUNCE_MSEC) {
     return;
   }
   lastWaterClick = thisTime;
@@ -297,10 +297,10 @@ void setupInputPins() {
 }
 
 void setupWifi() {
-  if(!isDoingWifi) {
+  if (!isDoingWifi) {
     return;
   }
-  WiFi.mode(WIFI_STA);  
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println("Connecting to wifi: " + String(ssid));
   while (WiFi.status() != WL_CONNECTED) {
@@ -311,41 +311,41 @@ void setupWifi() {
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-//  Serial.println("Setting up OTA");
-//  // Setup the OTA programming
-//   ArduinoOTA.setPort(3232);
-//   ArduinoOTA.setHostname("weather_station_arduino_1");
-//   ArduinoOTA.setPassword("unisux");
-//
-//  ArduinoOTA
-//    .onStart([]() {
-//      String type;
-//      if (ArduinoOTA.getCommand() == U_FLASH)
-//        type = "sketch";
-//      else // U_SPIFFS
-//        type = "filesystem";
-//
-//      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-//      Serial.println("Start updating " + type);
-//    })
-//    .onEnd([]() {
-//      Serial.println("\nEnd");
-//    })
-//    .onProgress([](unsigned int progress, unsigned int total) {
-//      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-//    })
-//    .onError([](ota_error_t error) {
-//      Serial.printf("Error[%u]: ", error);
-//      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-//      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-//      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-//      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-//      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-//    });
-//
-//  ArduinoOTA.begin();
-//
-//  Serial.println("OTA ready on port 3232");
+  //  Serial.println("Setting up OTA");
+  //  // Setup the OTA programming
+  //   ArduinoOTA.setPort(3232);
+  //   ArduinoOTA.setHostname("weather_station_arduino_1");
+  //   ArduinoOTA.setPassword("unisux");
+  //
+  //  ArduinoOTA
+  //    .onStart([]() {
+  //      String type;
+  //      if (ArduinoOTA.getCommand() == U_FLASH)
+  //        type = "sketch";
+  //      else // U_SPIFFS
+  //        type = "filesystem";
+  //
+  //      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+  //      Serial.println("Start updating " + type);
+  //    })
+  //    .onEnd([]() {
+  //      Serial.println("\nEnd");
+  //    })
+  //    .onProgress([](unsigned int progress, unsigned int total) {
+  //      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  //    })
+  //    .onError([](ota_error_t error) {
+  //      Serial.printf("Error[%u]: ", error);
+  //      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+  //      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+  //      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+  //      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+  //      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  //    });
+  //
+  //  ArduinoOTA.begin();
+  //
+  //  Serial.println("OTA ready on port 3232");
 }
 
 // Creates a JSON object out of required data, and returns as serialised string.
@@ -355,20 +355,20 @@ String createJsonDoc() {
   doc["num_data_points"] = NUM_DATA_POINTS;
   doc["interval"] = WIND_FRAME_SIZE;
   doc["water_mm"] = waterClickCount * 0.2794;
-  doc["temperature"] = temperature;
-  doc["humidity"] = humidity;
-  doc["pressure"] = pressure;
+  doc["temperature"] = rnd(temperature, 2);
+  doc["humidity"] = rnd(humidity, 0);
+  doc["pressure"] = rnd(pressure, 0);
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
   JsonArray windClickTimes = doc.createNestedArray("wind_clicks");
-  for(int i = 0; i < NUM_DATA_POINTS; ++i) {
-    windSpeedArr.add(windSpeedKMh[i]);
+  for (int i = 0; i < NUM_DATA_POINTS; ++i) {
+  windSpeedArr.add(windSpeedKMh[i]);
     windDirArr.add(windDir[i]);
     maxGustArr.add(maxGust[i]);
   }
-  for(int i = 0; i < windClickCount; ++i) {
-    windClickTimes.add(windClicks[i]);
+  for (int i = 0; i < windClickCount; ++i) {
+  windClickTimes.add(windClicks[i]);
   }
 
   return doc.as<String>();
@@ -380,16 +380,23 @@ String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick, bool
   wsdoc["wdir"] = windDir;
   wsdoc["waterclick"] = isWaterClick;
   wsdoc["time"] = millis();
-  if(includeAtmospheric) {
+  if (includeAtmospheric)  {
     wsdoc["temp"] = temperature;
     wsdoc["humidity"] = humidity;
-    wsdoc["pressure"] = pressure;  
+    wsdoc["pressure"] = pressure;
   }
   return wsdoc.as<String>();
 }
 
-void sendHttpReq() {  
-  if(!isDoingWifi) {
+float rnd(float val, int numDecimalPoints) {
+  float mult = pow(10.f, numDecimalPoints);
+  int intRes = (int)(val * mult);
+  float ret = ((float)intRes / mult);
+  return ret;
+}
+
+void sendHttpReq() {
+  if (!isDoingWifi) {
     return;
   }
   //Check WiFi connection status
@@ -402,25 +409,25 @@ void sendHttpReq() {
     http.begin(serverPath.c_str());
 
     http.addHeader("Content-Type", "application/json");
-   
+
     String dataAsString = createJsonDoc();
 
     // Send HTTP POST request
     int httpResponseCode = http.POST(dataAsString);
 
     if (httpResponseCode > 0) {
-//        Serial.print("HTTP Response code: ");
-//        Serial.println(httpResponseCode);
-//        String payload = http.getString();
-//        Serial.print("HTTP Response: ");
-//        Serial.println(payload);
+      //        Serial.print("HTTP Response code: ");
+      //        Serial.println(httpResponseCode);
+      //        String payload = http.getString();
+      //        Serial.print("HTTP Response: ");
+      //        Serial.println(payload);
     }
     else {
       // Don't bother printing if server is unreachable
-//      if(httpResponseCode != -1) {
-        Serial.print("Unexpected HTTP Error code: ");
-        Serial.println(httpResponseCode);
-//      }
+      //      if(httpResponseCode != -1) {
+      Serial.print("Unexpected HTTP Error code: ");
+      Serial.println(httpResponseCode);
+      //      }
     }
     // Free resources
     http.end();
