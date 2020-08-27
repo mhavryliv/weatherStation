@@ -1,6 +1,8 @@
 'use strict';
 const uuid = require('uuid');
 const mdb = require('./mclient.js');
+const middy = require('middy');
+const { cors } = require('middy/middlewares');
 // for testing, expose the mdb
 module.exports.mdb = mdb;
 
@@ -213,7 +215,9 @@ module.exports.add = async (event, context) => {
   if(!dataCheck.has_all_data) {
     const response = {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json' },
       body: JSON.stringify(dataCheck)
     }
     return response;
@@ -228,7 +232,9 @@ module.exports.add = async (event, context) => {
     console.error(error);
     return {
       statusCode: error.statusCode || 501,
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json' },
       body: 'Could not write the weather data.',
     };
   }

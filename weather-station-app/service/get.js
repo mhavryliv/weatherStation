@@ -80,7 +80,9 @@ module.exports.get = async (event, context) => {
   const data = JSON.parse(event.body);
   let response = {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'application/json' }
   };
   try {
     let retEvents;
