@@ -73,35 +73,35 @@ void webSocketEvent(String msg){
     windClickCounter++;
     if(windDir.equals("N")) {
       windXComponent = 0.f;
-      windYComponent = 1.f;
-    }
-    else if(windDir.equals("NE")) {
-      windXComponent = 0.5f;
-      windYComponent = 0.5f;      
-    }
-    else if(windDir.equals("E")) {
-      windXComponent = 1.f;
-      windYComponent = 0.f;
-    }
-    else if(windDir.equals("SE")) {
-      windXComponent = 0.5f;
-      windYComponent = -0.5f;
-    }
-    else if(windDir.equals("S")) {
-      windXComponent = 0.f;
       windYComponent = -1.f;
     }
-    else if(windDir.equals("SW")) {
+    else if(windDir.equals("NE")) {
       windXComponent = -0.5f;
-      windYComponent = -0.5f;
+      windYComponent = -0.5f;      
     }
-    else if(windDir.equals("W")) {
+    else if(windDir.equals("E")) {
       windXComponent = -1.f;
       windYComponent = 0.f;
     }
-    else if(windDir.equals("NW")) {
+    else if(windDir.equals("SE")) {
       windXComponent = -0.5f;
-      windYComponent = -0.5f;
+      windYComponent = 0.5f;
+    }
+    else if(windDir.equals("S")) {
+      windXComponent = 0.f;
+      windYComponent = 1.f;
+    }
+    else if(windDir.equals("SW")) {
+      windXComponent = 0.5f;
+      windYComponent = 0.5f;
+    }
+    else if(windDir.equals("W")) {
+      windXComponent = 1.f;
+      windYComponent = 0.f;
+    }
+    else if(windDir.equals("NW")) {
+      windXComponent = 0.5f;
+      windYComponent = 0.5f;
     }
   }
 }
