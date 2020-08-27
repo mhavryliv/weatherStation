@@ -28,7 +28,7 @@ String serverName = "http://192.168.86.121:9876/add";
 
 const bool isDoingWifi = true;
 // Wifi sending interval (msec)
-const int WIFI_INTERVAL = 6000;
+const int WIFI_INTERVAL = 30000;
 int dataSetCounter = 0;
 const int windSpeedInputPin = 16;
 const int windDirInPin = A0;
@@ -60,13 +60,13 @@ double windSpeedKMh[NUM_DATA_POINTS];
 double maxGust[NUM_DATA_POINTS];
 String windDir[NUM_DATA_POINTS];
 volatile unsigned long frameStartTime;
-volatile unsigned long windClicks[WIND_FRAME_SIZE * NUM_DATA_POINTS];
+volatile unsigned long windClicks[(WIND_FRAME_SIZE/WIND_DEBOUNCE_MSEC) * NUM_DATA_POINTS];
 volatile int windClickCount;
 double temperature;
 double pressure;
 double humidity;
 unsigned long lastBMERead;
-const unsigned long bmeReadDelay = 60000;
+const unsigned long bmeReadDelay = 59000;
 
 // Websocket
 const char* websockets_server_host = "realtimeweather-molly1.flyingaspidistra.net"; //Enter server adress
@@ -355,21 +355,21 @@ String createJsonDoc() {
   doc["num_data_points"] = NUM_DATA_POINTS;
   doc["interval"] = WIND_FRAME_SIZE;
   doc["water_mm"] = waterClickCount * 0.2794;
-  doc["temperature"] = rnd(temperature, 2);
-  doc["humidity"] = rnd(humidity, 0);
-  doc["pressure"] = rnd(pressure, 0);
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["pressure"] = pressure;
   JsonArray windSpeedArr = doc.createNestedArray("wind_speed");
   JsonArray windDirArr = doc.createNestedArray("wind_dir");
   JsonArray maxGustArr = doc.createNestedArray("max_gust");
-  JsonArray windClickTimes = doc.createNestedArray("wind_clicks");
+//  JsonArray windClickTimes = doc.createNestedArray("wind_clicks");
   for (int i = 0; i < NUM_DATA_POINTS; ++i) {
   windSpeedArr.add(windSpeedKMh[i]);
     windDirArr.add(windDir[i]);
     maxGustArr.add(maxGust[i]);
   }
-  for (int i = 0; i < windClickCount; ++i) {
-  windClickTimes.add(windClicks[i]);
-  }
+//  for (int i = 0; i < windClickCount; ++i) {
+//  windClickTimes.add(windClicks[i]);
+//  }
 
   return doc.as<String>();
 }

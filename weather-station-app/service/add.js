@@ -23,7 +23,7 @@ function isValidData(data) {
   // Check key data
   let dataRequired = ["interval", "num_data_points", "water_mm",
                         "wind_speed", "wind_dir", "max_gust", "temperature", 
-                        "humidity", "pressure", "info", "wind_clicks"];
+                        "humidity", "pressure", "info"];
   // Quick check they are the same
   if(JSON.stringify(allDataKeys.sort()) !== JSON.stringify(dataRequired.sort())) {
     dataRequired.forEach(requiredKey => {
@@ -63,11 +63,73 @@ function isValidData(data) {
 }
 module.exports.isValidData = isValidData;
 
+function getAverage(data) {
+  let ret = 0;
+  for(var i = 0; i < data.length; ++i) {
+    ret += data[i];
+  }
+  ret /= data.length;
+  return ret;
+}
+
+const round = (number, decimalPlaces) => {
+  const factorOfTen = Math.pow(10, decimalPlaces)
+  return Math.round(number * factorOfTen) / factorOfTen
+}
+
+function convertDataToDBItem(data) {
+  // Fields to pull out
+  const aggregrateDbFields = ["water_mm", "temperature", "humidity", "pressure"];
+  const fieldsToRound = ["temperature", "humidity", "pressure", "wind_speed", "max_gust"];
+  const arrayDbFields = [ "wind_speed", "wind_dir", "max_gust"];
+  // Number of data points in this data set
+  const numItems = data.num_data_points;
+  // Sampling interval in msec
+  const samplingInterval = data.interval;
+  // Total time for this set of data
+  const totalTime = numItems * samplingInterval;
+  const startTime = Date.now();
+  let item = {
+    time: startTime,
+    interval: samplingInterval,
+    num_wind_data_points: numItems
+  };
+  // Loop through the items that are single values
+  for(var i = 0; i < aggregrateDbFields.length; ++i) {
+    const field = aggregrateDbFields[i];
+    item[field] = data[field];
+    if(fieldsToRound.indexOf(field) !== -1) {
+      item[field] = round(item[field], 2);
+    }
+  }
+  // Loop through the arrays and write them
+  for(var i = 0; i < arrayDbFields.length; ++i) {
+    const field = arrayDbFields[i];
+    item[field] = data[field];
+  }
+
+  for(var i = 0; i < fieldsToRound.length; ++i) {
+    const field = fieldsToRound[i];
+    if(field === "wind_speed" || field === "max_gust") {
+      let speeds = item[field];
+      for(var j = 0; j < speeds.length; ++j) {
+        speeds[j] = round(speeds[j], 2);
+      }
+    }
+    else {
+      item[field] = round(item[field], 2);
+    }
+  }
+
+  return item;
+}
+module.exports.convertDataToDBItem = convertDataToDBItem;
+
 // Converts data in the Arduino format into array format for entry into our DB
 function convertDataToArrays(data) {
-  // Fields to pull out to fhte 
+  // Fields to pull out
   const aggregrateDbFields = ["water_mm", "temperature", "humidity", "pressure"];
-  const arrayDbFields = [ "wind_speed", "wind_dir", "max_gust", "wind_clicks"];
+  const arrayDbFields = [ "wind_speed", "wind_dir", "max_gust"];
   // Number of data points in this data set
   const numItems = data.num_data_points;
   // Sampling interval in msec
@@ -129,6 +191,20 @@ async function writeDataToDb(dataArr) {
   }
 }
 module.exports.writeDataToDb = writeDataToDb;
+
+async function writeSingleItemToDb(item) {
+  try {
+    await mdb.checkConn();
+    const events = mdb.db().collection(mdb.eventCollection);
+    const result = await events.insertOne(item);
+    return Promise.resolve(result.insertedId);
+  }
+  catch(e) {
+    console.log("Error writing to db: " + e);
+    return Promise.reject(e);
+  }
+}
+module.exports.writeSingleItemToDb = writeSingleItemToDb;
 
 module.exports.add = async (event, context) => {
   const data = JSON.parse(event.body);

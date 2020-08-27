@@ -13,12 +13,12 @@ const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-depe
 const IS_OFFLINE = process.env.IS_OFFLINE;
 
 // Set the timeout to 10 sec to wait for post data from weather station
-jest.setTimeout(10000);
+jest.setTimeout(100000);
 
 // This calls back with good data either from disk or after receviing from arduino
  let getGoodData = new Promise(function(resolve, reject) {
   if(!fs.existsSync(goodDataPath)) {
-      app.post('/weather_data_up', (req, res) => {
+      app.post('/add', (req, res) => {
         const data = {"body": req.body};
         fs.writeFileSync(goodDataPath, JSON.stringify(data, null, 2));
         res.send("ok");
@@ -47,6 +47,23 @@ test('Data validation', async done => {
   done();
 })
 
+test('Data conversion test new', async (done) => {
+  const originalData = goodData.body;
+  const item = addHandler.convertDataToDBItem(originalData);
+  try {
+    const insertedId = await addHandler.writeSingleItemToDb(item);
+    // Try and retrieve it
+    const lastEvent = await getHandler.getLastEvent();
+    expect(lastEvent._id.str).toBe(insertedId.str);
+  }
+  catch(e) {
+    expect(e).toBeNull();
+  }
+
+  done();
+})
+
+/*
 // Will be executed after done() is called in the first test
 test('Data conversion test', () => {
   // Extract the actual data out of the original goodData http req
@@ -167,6 +184,7 @@ test('Data read test', async (done) => {
   }
   done();
 })
+*/
 
 afterAll(() => {
   // Close the database connection
