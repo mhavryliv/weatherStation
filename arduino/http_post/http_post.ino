@@ -23,12 +23,12 @@ const char* password = "unisux12";
 Adafruit_BME280 bme; // I2C
 
 //Your Domain name with URL path or IP address with path
-String serverName = "http://192.168.86.121:9876/add";
-//String serverName = "https://weatherreporting.flyingaspidistra.net/add";
+//String serverName = "http://192.168.86.121:9876/add";
+String serverName = "https://weatherreporting.flyingaspidistra.net/add";
 
 const bool isDoingWifi = true;
 // Wifi sending interval (msec)
-const int WIFI_INTERVAL = 30000;
+const int WIFI_INTERVAL = 60000;
 int dataSetCounter = 0;
 const int windSpeedInputPin = 16;
 const int windDirInPin = A0;

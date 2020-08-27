@@ -108,7 +108,10 @@ module.exports.get = async (event, context) => {
         retEvents[i].wind_clicks = undefined;
       }
     }
-    response.body = JSON.stringify(retEvents);
+    response.body = JSON.stringify({
+      count: retEvents.length,
+      events: retEvents
+    });
   }
   catch(e) {
     response.statusCode = 400;

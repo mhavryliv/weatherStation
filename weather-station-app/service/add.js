@@ -211,17 +211,18 @@ module.exports.add = async (event, context) => {
   const dataCheck = isValidData(data);
 
   if(!dataCheck.has_all_data) {
-    callback(null, {
+    const response = {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dataCheck)
-    });
-    return;
+    }
+    return response;
   }
 
-  const dataAsArr = convertDataToArrays(data);
+  const dataItem = convertDataToDBItem(data);
+  
   try {
-    await writeDataToDb(dataAsArr);
+    const insertedId = await writeSingleItemToDb(dataItem);
   }
   catch(error) {
     console.error(error);
@@ -236,7 +237,7 @@ module.exports.add = async (event, context) => {
   const response = {
     statusCode: 200,
     body: JSON.stringify({
-      addEventCount: dataAsArr.length
+      'success': true
     })
   };
   return response;
