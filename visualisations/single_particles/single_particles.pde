@@ -67,9 +67,9 @@ void webSocketEvent(String msg){
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
+  println(windDir);
   if(isWaterClick) {
     println("Water!!!");
-    return;
   }
   if(isWindClick) {
     println(windDir);
@@ -104,7 +104,7 @@ void webSocketEvent(String msg){
     }
     else if(windDir.equals("NW")) {
       windXComponent = 0.5f;
-      windYComponent = 0.5f;
+      windYComponent = -0.5f;
     }
   }
 }

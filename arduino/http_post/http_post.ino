@@ -44,7 +44,7 @@ String lastWindDir = "N";
 
 // The normalised values output by the wind direction vane, clockwise from North
 const int WIND_DIR_LEN = 8;
-const float windDirOutputVals[WIND_DIR_LEN] = {0.23, 0.53, 0.85, 0.78, 0.67, 0.38, 0.04, 0.13};
+const float windDirOutputVals[WIND_DIR_LEN] = {0.23, 0.53, 0.94, 0.84, 0.67, 0.38, 0.04, 0.13};
 const String windDirNames[WIND_DIR_LEN] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
 
 // Water
@@ -201,6 +201,7 @@ void loop() {
   }
   if(!didSendWSDuringWaitLoop) {
     // Send a ws msg every loop as a proof of life, and send atmospheric data
+    Serial.println(lastWindDir);
     String msg = createJsonForWs(false, lastWindDir, false, true);
     client.send(msg);
   }
@@ -255,6 +256,7 @@ void calculateWindDir() {
   float normalised = (float)aVal / 4095.f;
 
   // Find which is the closest value in the wind lookup table
+  Serial.println(normalised);
   int closestIndex = 0;
   float closestDiff = 1;
   for (int i = 0; i < WIND_DIR_LEN; ++i) {
