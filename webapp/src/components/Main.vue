@@ -28,7 +28,20 @@
             <div class="label">Pressure:</div>
             <div class="value">{{currentWeather.pressure}}</div>
           </div>
-
+        </div>
+        <div class="atmos">
+          <div class="item">
+            <div class="label">Wind speed:</div>
+            <div class="value">{{currentWindSpeed}}</div>
+          </div>
+          <div class="item">
+            <div class="label">Wind gust:</div>
+            <div class="value">{{currentWindGust}}</div>
+          </div>
+          <div class="item">
+            <div class="label">Wind direction:</div>
+            <div class="value">{{currentWindDir}}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -39,8 +52,11 @@
         <button @click="reloadHistoricData">Reload</button>
 
         <div class="small">
-          <line-chart :chart-data="datacollection" :options="chartOptions" :styles="myStyles"
-          ></line-chart>
+          <div>Temperature</div>
+          <line-chart :chart-data="temperatureCollection" :options="chartOptions" />
+
+          <div>Wind</div>
+          <line-chart :chart-data="windCollection" :options="chartOptions" />
 
         </div>
       </div>
@@ -75,13 +91,14 @@ export default {
         count: 0,
         events: []
       },
-      numHoursForHistory: 6,
-      datacollection: {},
+      numHoursForHistory: 12,
+      temperatureCollection: {},
+      windCollection: {},
       chartOptions: {
         scales: {
           yAxes: [{
             ticks: {
-              beginAtZero: true
+              beginAtZero: false
             },
             gridLines: {
               display: true
@@ -89,7 +106,7 @@ export default {
           }],
           xAxes: [ {
             gridLines: {
-              display: false
+              display: true
             }
           }]
         },
@@ -98,8 +115,7 @@ export default {
         },
         responsive: true,
         maintainAspectRatio: false
-      },
-      chartHeight: 300
+      }
     }
   },
   computed: {
@@ -112,10 +128,21 @@ export default {
         return date.toLocaleDateString('en-AU', options);
       }
     },
-    myStyles () {
-      return {
-        // height: this.chartHeight + 'px',
-        // position: 'relative'
+    currentWindSpeed() {
+      if(this.currentWeather.wind_speed) {
+        let avg = this.round(this.averageOfArr(this.currentWeather.wind_speed), 2);
+        return avg;
+      }
+    },
+    currentWindGust() {
+      if(this.currentWeather.max_gust) {
+        let max = this.round(this.maxOfArr(this.currentWeather.max_gust), 2);
+        return max;
+      }
+    },
+    currentWindDir() {
+      if(this.currentWeather.wind_dir) {
+        return this.currentWeather.wind_dir[this.currentWeather.wind_dir.length - 1];
       }
     },
     historicDataTimeRange() {
@@ -135,7 +162,8 @@ export default {
         return;
       }
       this.historicData.loading = true;
-      const data = await this.getEventHistory(86400);
+      const numseconds = this.numHoursForHistory * 60 * 60;
+      const data = await this.getEventHistory(numseconds);
       this.historicData.loading = false;
       if(!data) {
         console.log("No historic data!");
@@ -144,15 +172,13 @@ export default {
         return;
       }
       this.historicData = data;
-      console.log(this.historicData);
       const timerange = this.historicDataTimeRange;
       const start = new Date(timerange.start);
       const end = new Date(timerange.end);
+      console.log("Historical range:");
       console.log(start);
       console.log(end);
-      this.fillTempData();
-
-
+      this.calculateAndChartData();
     },
     async getEventHistory(numSecBack) {
       const postData = {
@@ -196,73 +222,63 @@ export default {
       const interval = Math.round((endTime - startTime) / numToMake);
       // let numToMake = Math.round((endTime - startTime) / interval);
       for(var i = 0; i < numToMake; ++i) {
-        if(i === (numToMake - 1)) {
-          options.minute = 'numeric'
-        }
-        else {
-          options.minute = undefined;
-        }
         const date = new Date(startTime + (interval * i));
         const dateStr = date.toLocaleTimeString('en-AU', options);
         labels.push(dateStr);
       }
-
       return labels;
     },
-    getEventIndicesForTimes(start, end, numSamples) {
+    generateTimeLabelsFromEvents(events, options) {
+      let labels = [];
+      var options = {hour: 'numeric', minute: 'numeric'};
+      for(var i = 0; i < events.length; ++i) {
+        // const date = new Date(events[i].time);
+        let date;
+        if(i !== (events.length - 1)) {
+          date = this.roundTimeToHalfHour(events[i].time);
+        }
+        else {
+          date = new Date(events[i].time);
+        }
+        const dateStr = date.toLocaleTimeString('en-AU', options);
+        labels.push(dateStr);
+      }
+      return labels;
+    },
+    roundTimeToHalfHour(time) {
+      const date = new Date(time);
+      var coeff = 1000 * 60 * 30;
+      var rounded = new Date(Math.round(date.getTime() / coeff) * coeff)
+      return rounded;
+    },
+    getEventIndicesForTimes(eventsToSearch, start, end, numSamples) {
       let events = [];
       let hasFoundStart = false;
-      let startIndex = -1;
-      const eventsToSearch = this.historicData.events;
-      startIndex = this.findIndexClosestTo(start, eventsToSearch);
-      console.log("Start index is: " + startIndex);
-      return;
-
-      // for(var i = 0; i < eventsToSearch.length; ++i) {
-      //   if(!hasFoundStart) {
-      //     let closetTimeDiff;
-      //     for(var j = 0; j < eventsToSearch.length; ++j) {
-      //       const timeDiff = start - eventsToSearch[j].time;
-      //       if(!closetTimeDiff) {
-      //         closetTimeDiff = timeDiff;
-      //         continue;
-      //       }
-      //       // If the previous time diff was positive and this one is negative,
-      //       // we've crossed over the point. Just see which is smaller and we're done
-      //       if(closetTimeDiff > 0 && timeDiff < 0) {
-      //         if(Math.abs(closetTimeDiff) < Math.abs(timeDiff)) {
-      //           startIndex = j - 1;
-      //         }
-      //         else {
-      //           startIndex = j;
-      //         }
-      //         hasFoundStart = true;
-      //         break;
-      //       }
-      //       // else, compare then abs and store the smallest
-      //       if(Math.abs(timeDiff) < Math.abs(closestTimeDiff)) {
-      //         closetTimeDiff = timeDiff;
-      //       }
-      //     }
-      //   }
-      //   if(!hasFoundStart) {
-      //     console.log("Error! Can't find start point in time samples");
-      //     return;
-      //   }
-      // }
+      const startIndex = this.findIndexClosestTo(start, eventsToSearch);
+      const endIndex = this.findIndexClosestTo(end, eventsToSearch);
+      // subtract 1 from numsamples, because we're manually taking care of the start
+      // and end indices
+      const interval = (end - start) / (numSamples - 1);
+      let indices = [startIndex];
+      // Loop through but miss the start and end
+      for(var i = 1; i < (numSamples - 1); ++i) {
+        const target = (start + (i*interval));
+        let index = this.findIndexClosestTo(target, eventsToSearch, indices[i-1]);
+        indices.push(index);
+      }
+      indices.push(endIndex);
+      return indices;
     },
     // Helper function to find the array index of event with time closest to @time
-    findIndexClosestTo(time, events) {
-      let hasFoundTime = false;
+    findIndexClosestTo(time, events, startPos = 0) {
       let closestTimeDiff;
-      let foundIndex;
-      for(var i = 0; i < events.length; ++i) {
+      let closestIndex;
+      for(var i = startPos; i < events.length; ++i) {
         const timeDiff = time - events[i].time;
         if(!closestTimeDiff) {
           closestTimeDiff = timeDiff;
           if(closestTimeDiff === 0) {
-            hasFoundTime = true;
-            foundIndex = i;
+            closestIndex = i;
             break;
           }
           continue;
@@ -271,47 +287,142 @@ export default {
         // we've crossed over the point. Just see which is smaller and we're done
         if(closestTimeDiff > 0 && timeDiff < 0) {
           if(Math.abs(closestTimeDiff) < Math.abs(timeDiff)) {
-            foundIndex = i - 1;
+            closestIndex = i - 1;
           }
           else {
-            foundIndex = i;
+            closestIndex = i;
           }
-          hasFoundTime = true;
           break;
         }
         // else, compare then abs and store the smallest
         if(Math.abs(timeDiff) < Math.abs(closestTimeDiff)) {
           closestTimeDiff = timeDiff;
+          closestIndex = i;
         }
       }
-      if(!hasFoundTime) {
-        console.log("Error! Can't find start point in time samples");
-        return;
-      }
-      return foundIndex;
+      return closestIndex;
     },
-    fillTempData() {
+    sampledEvents(allEvents, timerange, numEvents) {
+      let eventsToSample = 
+      this.getEventIndicesForTimes(allEvents, timerange.start, timerange.end, numEvents);
+      let events = [];
+      eventsToSample.forEach(index => {
+        events.push(allEvents[index]);
+      });
+      return {
+        events: events,
+        indices: eventsToSample
+      };
+    },
+    calculateAndChartData() {
       const timerange = this.historicDataTimeRange;
       let tempData = [];
       if(!timerange) {
         return console.log("No time range to fill temperature data!");
       }
-      const labels = this.generateDateLabels(timerange.start, timerange.end, this.numHoursForHistory);
-      console.log(labels);
-      this.getEventIndicesForTimes(timerange.start + 120 * 1000, timerange.end, this.numHoursForHistory);
-      this.datacollection = {
+      let numSamples = this.numHoursForHistory;
+      numSamples = 4;
+      const sampledEventsAndIndices
+      = this.sampledEvents(this.historicData.events, timerange, numSamples);
+      const events = sampledEventsAndIndices.events;
+      const indices = sampledEventsAndIndices.indices;
+
+      // Draw temperature, it just picks from the samples events
+      this.drawTemperatureChart(events);
+
+      // Calculate the wind data. It should be the maximum, average winds
+      const windData = this.calculateWindData(indices, this.historicData.events);
+      this.drawWindChart(windData, events);
+
+    },
+    calculateWindData(indices, allEvents) {
+      // Should return the same number of indices, but should take data from either 
+      // side of each index and return average, and maximum.
+      let avgs = [];
+      let segmentGroupsWindSpeed = [];
+      let segmentGroupsWindGust = [];
+      // console.log("Looking from " + indices[0] + " to " + indices[indices.length-1]);
+      // Loop till 2nd last element, and do last element individually after loop
+      for(var i = 0; i < indices.length; ++i) {
+        // each event will have an array of wind values. extract it, 
+        let index = indices[i];
+        // find the halfway points
+        let prevMidPoint;
+        if(i !== 0) {
+          prevMidPoint = indices[i-1] + Math.floor((index-indices[i-1])/2);
+        }
+        else {
+          prevMidPoint = index;
+        }
+        let nextMidPoint;
+        if(i !== indices.length - 1) {
+          const nextIndex = indices[i+1];
+          nextMidPoint = index + Math.floor((nextIndex - index) / 2);
+        }
+        else {
+          nextMidPoint = index;
+        }
+        // Get all the wind info from index to nextMidpoint
+        let thisSegmentWindSpeeds = [];
+        let thisSegmentWindGust = [];
+        // console.log("On loop " + i + " which has index " + index);
+        // console.log("Looking at index: " + prevMidPoint + " through to " + nextMidPoint);
+        for(var j = prevMidPoint; j < nextMidPoint; ++j) {
+          thisSegmentWindSpeeds = thisSegmentWindSpeeds.concat(allEvents[j].wind_speed);
+          thisSegmentWindGust = thisSegmentWindGust.concat(allEvents[j].max_gust);
+        }
+        segmentGroupsWindSpeed.push(thisSegmentWindSpeeds);
+        segmentGroupsWindGust.push(thisSegmentWindGust);
+      }
+      // Now create averages and max gusts
+      let windAverages = [];
+      let maxGusts = [];
+      for(var i = 0; i < indices.length; ++i) {
+        const windAvg = this.averageOfArr(segmentGroupsWindSpeed[i]);
+        windAverages.push(windAvg);
+        const maxGust = this.maxOfArr(segmentGroupsWindGust[i]);
+        maxGusts.push(maxGust);
+      }
+      return {
+        speeds: windAverages,
+        gusts: maxGusts
+      }
+    },
+    drawTemperatureChart(events) {
+      const labels = this.generateTimeLabelsFromEvents(events);
+      let tempVals = events.map(event => event.temperature);
+      this.temperatureCollection = {
         labels: labels,
         datasets: [
           {
             label: "Temp (Celcius)",
             backgroundColor: 'rgba(0, 50, 100, 0.5)',
-            data: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            data: tempVals
           }
         ]
       }
     },
+    drawWindChart(windData, events) {
+      const labels = this.generateTimeLabelsFromEvents(events);
+      this.windCollection = {
+        labels: labels,
+        datasets: [
+          {
+            label: "Gust (Km/h)",
+            backgroundColor: 'rgba(255, 0, 0, 0.5)',
+            data: windData.gusts
+          },
+          {
+            label: "Average (Km/h)",
+            backgroundColor: 'rgba(0, 250, 0, 0.55)',
+            data: windData.speeds
+          }
+        ]
+      }
+
+    },
     fillData () {
-      this.datacollection = {
+      this.temperatureCollection = {
         labels: [this.getRandomInt(), this.getRandomInt()],
         datasets: [
           {
@@ -326,16 +437,32 @@ export default {
         ]
       }
     },
-    getRandomInt () {
-      return Math.floor(Math.random() * (50 - 5 + 1)) + 5
+    averageOfArr(arr) {
+      let sum = 0;
+      for(var i = 0; i < arr.length; ++i) {
+        sum += arr[i];
+      }
+      sum /= arr.length;
+      return sum;
     },
-    increase () {
-     this.chartHeight += 10
+    maxOfArr(arr) {
+      let max = 0;
+      for(var i = 0; i < arr.length; ++i) {
+        if(arr[i] > max) {
+          max = arr[i];
+        }
+      }
+      return max;
+    },
+    round(number, decimalPlaces) {
+      const factorOfTen = Math.pow(10, decimalPlaces)
+      return Math.round(number * factorOfTen) / factorOfTen
     }
   },
   mounted() {
     this.getCurrentData();
-    this.fillTempData();
+    this.reloadHistoricData();
+    
   }
 
 }
@@ -346,11 +473,13 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  
   .atmos {
     display: flex;
     justify-content: space-around;
     margin: 20px 0 20px 0;
     .item {
+      margin: 0 20px 0 20px;
       display: flex;
       .label {
         margin-right: 10px;

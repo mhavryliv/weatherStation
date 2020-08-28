@@ -49,7 +49,7 @@ void draw () {
   
   PVector windStrength = new PVector(windStrengthX, windStrengthY);
   
-  println(windStrength);
+  //println(windStrength);
   
   ps.setGravity(windStrength);
   
@@ -63,13 +63,16 @@ void draw () {
 
 void webSocketEvent(String msg){
   JSONObject data = parseJSONObject(msg);
+  println(msg);
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
   if(isWaterClick) {
     println("Water!!!");
+    return;
   }
   if(isWindClick) {
+    println(windDir);
     windClickCounter++;
     if(windDir.equals("N")) {
       windXComponent = 0.f;

@@ -284,6 +284,7 @@ void handleWaterClick() {
   if (diff < WATER_DEBOUNCE_MSEC) {
     return;
   }
+//  Serial.println("Water!!!");
   lastWaterClick = thisTime;
   waterClickCount++;
   hadWaterClick = true;
