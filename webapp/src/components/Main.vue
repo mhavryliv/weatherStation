@@ -35,7 +35,7 @@
 
     <hr>
       <div class="historic_data_wrapper">
-        <h3>Past 24 hours</h3>
+        <h3>Past {{numHoursForHistory}} hours</h3>
         <button @click="reloadHistoricData">Reload</button>
 
         <div class="small">
@@ -75,6 +75,7 @@ export default {
         count: 0,
         events: []
       },
+      numHoursForHistory: 6,
       datacollection: {},
       chartOptions: {
         scales: {
@@ -208,19 +209,101 @@ export default {
 
       return labels;
     },
+    getEventIndicesForTimes(start, end, numSamples) {
+      let events = [];
+      let hasFoundStart = false;
+      let startIndex = -1;
+      const eventsToSearch = this.historicData.events;
+      startIndex = this.findIndexClosestTo(start, eventsToSearch);
+      console.log("Start index is: " + startIndex);
+      return;
+
+      // for(var i = 0; i < eventsToSearch.length; ++i) {
+      //   if(!hasFoundStart) {
+      //     let closetTimeDiff;
+      //     for(var j = 0; j < eventsToSearch.length; ++j) {
+      //       const timeDiff = start - eventsToSearch[j].time;
+      //       if(!closetTimeDiff) {
+      //         closetTimeDiff = timeDiff;
+      //         continue;
+      //       }
+      //       // If the previous time diff was positive and this one is negative,
+      //       // we've crossed over the point. Just see which is smaller and we're done
+      //       if(closetTimeDiff > 0 && timeDiff < 0) {
+      //         if(Math.abs(closetTimeDiff) < Math.abs(timeDiff)) {
+      //           startIndex = j - 1;
+      //         }
+      //         else {
+      //           startIndex = j;
+      //         }
+      //         hasFoundStart = true;
+      //         break;
+      //       }
+      //       // else, compare then abs and store the smallest
+      //       if(Math.abs(timeDiff) < Math.abs(closestTimeDiff)) {
+      //         closetTimeDiff = timeDiff;
+      //       }
+      //     }
+      //   }
+      //   if(!hasFoundStart) {
+      //     console.log("Error! Can't find start point in time samples");
+      //     return;
+      //   }
+      // }
+    },
+    // Helper function to find the array index of event with time closest to @time
+    findIndexClosestTo(time, events) {
+      let hasFoundTime = false;
+      let closestTimeDiff;
+      let foundIndex;
+      for(var i = 0; i < events.length; ++i) {
+        const timeDiff = time - events[i].time;
+        if(!closestTimeDiff) {
+          closestTimeDiff = timeDiff;
+          if(closestTimeDiff === 0) {
+            hasFoundTime = true;
+            foundIndex = i;
+            break;
+          }
+          continue;
+        }
+        // If the previous time diff was positive and this one is negative,
+        // we've crossed over the point. Just see which is smaller and we're done
+        if(closestTimeDiff > 0 && timeDiff < 0) {
+          if(Math.abs(closestTimeDiff) < Math.abs(timeDiff)) {
+            foundIndex = i - 1;
+          }
+          else {
+            foundIndex = i;
+          }
+          hasFoundTime = true;
+          break;
+        }
+        // else, compare then abs and store the smallest
+        if(Math.abs(timeDiff) < Math.abs(closestTimeDiff)) {
+          closestTimeDiff = timeDiff;
+        }
+      }
+      if(!hasFoundTime) {
+        console.log("Error! Can't find start point in time samples");
+        return;
+      }
+      return foundIndex;
+    },
     fillTempData() {
       const timerange = this.historicDataTimeRange;
+      let tempData = [];
       if(!timerange) {
         return console.log("No time range to fill temperature data!");
       }
-      const hourInMsec = 60 * 60 * 1000;
-      const labels = this.generateDateLabels(timerange.start, timerange.end, 24);
+      const labels = this.generateDateLabels(timerange.start, timerange.end, this.numHoursForHistory);
       console.log(labels);
+      this.getEventIndicesForTimes(timerange.start + 120 * 1000, timerange.end, this.numHoursForHistory);
       this.datacollection = {
-        labels: [1, 2, 3, 4, 5, 6],
+        labels: labels,
         datasets: [
           {
-            label: "Temp (c)",
+            label: "Temp (Celcius)",
             backgroundColor: 'rgba(0, 50, 100, 0.5)',
             data: [1, 2, 3, 4, 5, 6, 7, 8, 9]
           }
