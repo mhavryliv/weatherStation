@@ -163,16 +163,26 @@ void loop() {
   //  delay(WIND_FRAME_SIZE);
   // Instead of sleeping, let's loop so we can check for wind clicks
   const unsigned long targetTime = frameStartTime + WIND_FRAME_SIZE;
+  bool didSendWSDuringWaitLoop = false;
   if (client.available()) {
     while (millis() < targetTime) {
       // If the flag is true, send a websocket msg
       if (hadWindClick || hadWaterClick) {
+        // If we had a wind click, recheck the wind direction!
+        if(hadWindClick) {
+          calculateWindDir();
+        }
         String msg = createJsonForWs(hadWindClick, lastWindDir, hadWaterClick, false);
         client.send(msg);
+        didSendWSDuringWaitLoop = true;
       }
       // reset the flags
-      hadWindClick = false;
-      hadWaterClick = false;
+      if(hadWindClick) {
+        hadWindClick = false;
+      }
+      if(hadWaterClick) {
+        hadWaterClick = false;
+      }
       delay(1);
     }
   }
@@ -182,15 +192,18 @@ void loop() {
     if (didConnect) {
       String wsString = createJsonForWs(false, "N", false, false);
       client.send(wsString);
+      didSendWSDuringWaitLoop = true;
       Serial.println("Reconnected!");
     }
     while (millis() < targetTime) {
       delay(1);
     }
   }
-  // Send a ws msg every loop as a proof of life, and send atmospheric data
-  String msg = createJsonForWs(false, lastWindDir, false, true);
-  client.send(msg);
+  if(!didSendWSDuringWaitLoop) {
+    // Send a ws msg every loop as a proof of life, and send atmospheric data
+    String msg = createJsonForWs(false, lastWindDir, false, true);
+    client.send(msg);
+  }
 }
 
 void getTemperatureData() {
@@ -253,7 +266,6 @@ void calculateWindDir() {
   }
   windDir[dataSetCounter] = windDirNames[closestIndex];
   lastWindDir = windDirNames[closestIndex];
-  //  Serial.println("Wind dir is: " + windDir);
 }
 
 // Interrupt handling
