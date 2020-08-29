@@ -1,6 +1,6 @@
 <template>
   <div class="main">
-    <h1>Mollymook Weather Station</h1>
+    <h2>Mollymook Beach Weather</h2>
     <!-- <h2>Current Weather</h2> -->
     <div v-if=currentWeather.loading>Loading...
       <loading-progress
@@ -321,7 +321,7 @@ export default {
         return console.log("No time range to fill temperature data!");
       }
       let numSamples = this.numHoursForHistory;
-      numSamples = 4;
+      // numSamples = 4;
       const sampledEventsAndIndices
       = this.sampledEvents(this.historicData.events, timerange, numSamples);
       const events = sampledEventsAndIndices.events;
@@ -374,6 +374,7 @@ export default {
         segmentGroupsWindSpeed.push(thisSegmentWindSpeeds);
         segmentGroupsWindGust.push(thisSegmentWindGust);
       }
+      // console.log(segmentGroupsWindSpeed);
       // Now create averages and max gusts
       let windAverages = [];
       let maxGusts = [];
@@ -473,13 +474,15 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  margin-left: 20px;
+  text-align: left;
   
   .atmos {
     display: flex;
-    justify-content: space-around;
-    margin: 20px 0 20px 0;
+    justify-content: flex-start;
+    margin: 10px 0 0px 0;
     .item {
-      margin: 0 20px 0 20px;
+      margin: 0 20px 0 0px;
       display: flex;
       .label {
         margin-right: 10px;

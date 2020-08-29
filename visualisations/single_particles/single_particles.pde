@@ -35,7 +35,7 @@ void draw () {
   ps.display();
   
   // Always decrement the windClickCounter
-  windClickCounter = windClickCounter - 0.05;
+  windClickCounter = windClickCounter - 0.125;
   windClickCounter = Math.max(0, windClickCounter);
   
   // Update the gravity
@@ -67,12 +67,12 @@ void webSocketEvent(String msg){
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
-  println(windDir);
+  //println(windDir);
   if(isWaterClick) {
     println("Water!!!");
   }
   if(isWindClick) {
-    println(windDir);
+    //println(windDir);
     windClickCounter++;
     if(windDir.equals("N")) {
       windXComponent = 0.f;
