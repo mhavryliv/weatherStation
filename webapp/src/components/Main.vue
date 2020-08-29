@@ -480,6 +480,7 @@ export default {
   .atmos {
     display: flex;
     justify-content: flex-start;
+    flex-wrap: wrap;
     margin: 10px 0 0px 0;
     .item {
       margin: 0 20px 0 0px;

@@ -6,20 +6,23 @@ import websockets.*;
 
 WebsocketClient wsc;
 
-int curx, cury;
+int mainFireX, mainFireY;
 float windClickCounter = 0;
 float windXComponent = 0.f;
 float windYComponent = 0.f;
 
+float[] impactArray;
+
 void setup() {  
   size(500, 500, P2D);
-  curx = width/2;
-  cury = height/2;
+  impactArray = new float[width*height];
+  mainFireX = width/2;
+  mainFireY = height/2;
   //orientation(LANDSCAPE);
   sprite = loadImage("sprite.png");
   ps = new ParticleSystem(1000);
   
-  ps.setEmitter(curx,cury);
+  ps.setEmitter(mainFireX,mainFireY);
   
   // Writing to the depth buffer is disabled to avoid rendering
   // artifacts due to the fact that the particles are semi-transparent
@@ -31,9 +34,20 @@ void setup() {
 
 void draw () {
   background(0);
-  ps.update();
-  ps.display();
   
+  ps.update();
+  ps.updateImpactArray(impactArray);
+  
+  loadPixels();
+  for(int x = 0; x < width; ++x) {
+    for(int y = 0; y < height; ++y) {
+      int loc = x + y * width;
+      pixels[loc] = color(impactArray[loc]);
+    }
+  }
+  updatePixels();
+  
+  ps.display();
   // Always decrement the windClickCounter
   windClickCounter = windClickCounter - 0.125;
   windClickCounter = Math.max(0, windClickCounter);
@@ -53,12 +67,11 @@ void draw () {
   
   ps.setGravity(windStrength);
   
-  ps.setEmitter(curx,cury);
+  ps.setEmitter(mainFireX, mainFireY);
   
   fill(255);
-  //textSize(16);
-  //text("Frame rate: " + int(frameRate), 10, 20);
-  
+  textSize(12);
+  text("Frame rate: " + int(frameRate), 10, 20); 
 }
 
 void keyPressed() {
@@ -83,7 +96,6 @@ void keyPressed() {
 }
 
 void handleWindInput(String windDir) {
-  println(windDir);
   windClickCounter++;
   if(windDir.equals("N")) {
     windXComponent = 0.f;

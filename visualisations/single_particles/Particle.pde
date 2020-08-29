@@ -1,15 +1,18 @@
 class Particle {
 
   PVector velocity;
-  float lifespan = 255;
+  final int lifespanMax = 255;
+  float lifespan = lifespanMax;
   
   PShape part;
   float partSize;
   
   PVector gravity;
 
+  PVector currentPosition;
 
   Particle(PVector startGravity) {
+    currentPosition = new PVector(0, 0);
     gravity = startGravity;
     partSize = random(5,30);
     part = createShape();
@@ -24,7 +27,15 @@ class Particle {
     part.endShape();
     
     rebirth(width/2,height/2);
-    lifespan = random(255);
+    lifespan = random(lifespanMax);
+  }
+  
+  PVector getPos() {
+    return currentPosition;
+  }
+  
+  float normalisedLifeSpan() {
+    return (float)lifespan / (float)lifespanMax;
   }
 
   PShape getShape() {
@@ -41,13 +52,15 @@ class Particle {
     velocity = new PVector(cos(a), sin(a));
     velocity.mult(speed);
     //lifespan = 255;
-    lifespan = random(255);
+    lifespan = random(lifespanMax);
     part.resetMatrix();
     part.translate(x, y); 
+    currentPosition.x = x;
+    currentPosition.y = y;
   }
   
   boolean isDead() {
-    if (lifespan < 0) {
+    if (lifespan == 0) {
      return true;
     } else {
      return false;
@@ -57,10 +70,14 @@ class Particle {
 
   public void update() {
     lifespan = lifespan - 1;
+    if(lifespan < 0) {
+      lifespan = 0;
+    }
     velocity.add(gravity);
     
     //part.setTint(color(255,lifespan));
-    part.setTint(color(240, 94, 27, lifespan));
+    part.setTint(color(240, 94, 27, lifespan)); // use orange-red colour
     part.translate(velocity.x, velocity.y);
+    currentPosition.add(velocity);
   }
 }

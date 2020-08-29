@@ -18,7 +18,26 @@ class ParticleSystem {
 
   void update() {
     for (Particle p : particles) {
-      p.update();
+      p.update();      
+    }
+  }
+  
+  void updateImpactArray(float[] arr) {
+    //println("Updating impact array");
+    final float adder = 50.f;
+    for (Particle p : particles) {
+      PVector pos = p.getPos();
+      float lifespan = p.normalisedLifeSpan();
+      int loc = (int)((int)pos.x + (int)pos.y * width);
+      if(pos.x < 0 || pos.y < 0) {
+        continue;
+      }
+      if(pos.x >= width || pos.y >= height) {
+        continue;
+      }
+      //println("Loc " + pos.x + ", " + pos.y + " at " + loc);
+      // increment the damage on that array location
+      arr[loc] = arr[loc] + (adder * lifespan);
     }
   }
 
