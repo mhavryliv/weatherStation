@@ -61,50 +61,75 @@ void draw () {
   
 }
 
+void keyPressed() {
+  if (key == CODED) {
+    String windDir = "";
+    if (keyCode == UP) {
+      windDir = "S";
+    }
+    else if (keyCode == DOWN) {
+      windDir = "N";
+    }
+    else if(keyCode == LEFT) {
+      windDir = "E";
+    }
+    else if(keyCode == RIGHT) {
+      windDir = "W";
+    }
+    if(windDir.length() > 0) {
+      handleWindInput(windDir);
+    }
+  }
+}
+
+void handleWindInput(String windDir) {
+  println(windDir);
+  windClickCounter++;
+  if(windDir.equals("N")) {
+    windXComponent = 0.f;
+    windYComponent = 1.f;
+  }
+  else if(windDir.equals("NE")) {
+    windXComponent = -0.5f;
+    windYComponent = 0.5f;      
+  }
+  else if(windDir.equals("E")) {
+    windXComponent = -1.f;
+    windYComponent = 0.f;
+  }
+  else if(windDir.equals("SE")) {
+    windXComponent = -0.5f;
+    windYComponent = -0.5f;
+  }
+  else if(windDir.equals("S")) {
+    windXComponent = 0.f;
+    windYComponent = -1.f;
+  }
+  else if(windDir.equals("SW")) {
+    windXComponent = 0.5f;
+    windYComponent = -0.5f;
+  }
+  else if(windDir.equals("W")) {
+    windXComponent = 1.f;
+    windYComponent = 0.f;
+  }
+  else if(windDir.equals("NW")) {
+    windXComponent = 0.5f;
+    windYComponent = 0.5f;
+  }
+}
+
 void webSocketEvent(String msg){
   JSONObject data = parseJSONObject(msg);
-  println(msg);
+  //println(msg);
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
   //println(windDir);
   if(isWaterClick) {
-    println("Water!!!");
+    //println("Water!!!");
   }
   if(isWindClick) {
-    //println(windDir);
-    windClickCounter++;
-    if(windDir.equals("N")) {
-      windXComponent = 0.f;
-      windYComponent = -1.f;
-    }
-    else if(windDir.equals("NE")) {
-      windXComponent = -0.5f;
-      windYComponent = -0.5f;      
-    }
-    else if(windDir.equals("E")) {
-      windXComponent = -1.f;
-      windYComponent = 0.f;
-    }
-    else if(windDir.equals("SE")) {
-      windXComponent = -0.5f;
-      windYComponent = 0.5f;
-    }
-    else if(windDir.equals("S")) {
-      windXComponent = 0.f;
-      windYComponent = 1.f;
-    }
-    else if(windDir.equals("SW")) {
-      windXComponent = 0.5f;
-      windYComponent = 0.5f;
-    }
-    else if(windDir.equals("W")) {
-      windXComponent = 1.f;
-      windYComponent = 0.f;
-    }
-    else if(windDir.equals("NW")) {
-      windXComponent = 0.5f;
-      windYComponent = -0.5f;
-    }
+    handleWindInput(windDir);
   }
 }
