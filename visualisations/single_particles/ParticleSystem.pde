@@ -15,6 +15,14 @@ class ParticleSystem {
       particleShape.addChild(p.getShape());
     }
   }
+  
+  void addParticlesToTotal(int total) {
+    for(int i = particles.size(); i < total; ++i) {
+      Particle p = new Particle(currentGravity);
+      particles.add(p);
+      particleShape.addChild(p.getShape());
+    }
+  }
 
   void update() {
     for (Particle p : particles) {
@@ -77,10 +85,20 @@ class ParticleSystem {
     }
   }
   
+  void setEmitter(PVector pos) {
+    setEmitter(pos.x, pos.y);
+  }
+  
   void setGravity(PVector newGravity) {
     currentGravity = newGravity;
     for(Particle p : particles) {
       p.setGravity(currentGravity);
+    }
+  }
+  
+  void setMaxLifespan(int val) {
+    for(Particle p : particles) {
+      p.setMaxLifespan(val);
     }
   }
 

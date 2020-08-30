@@ -1,7 +1,7 @@
 class Particle {
 
   PVector velocity;
-  final int lifespanMax = 255;
+  int lifespanMax = 255;
   float lifespan = lifespanMax;
   
   PShape part;
@@ -34,6 +34,10 @@ class Particle {
   
   PVector getPos() {
     return currentPosition;
+  }
+  
+  void setMaxLifespan(int val) {
+    lifespanMax = val;
   }
   
   float normalisedLifeSpan() {

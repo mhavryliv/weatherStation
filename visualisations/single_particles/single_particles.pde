@@ -15,9 +15,13 @@ float[] impactArray;
 PImage paperBackground;
 
 PImage destination;
+ArrayList<PVector> hotspots;
+ArrayList<ParticleSystem> hotspotSystems;
+
+long numLoops = 0;
 
 void setup() {  
-  size(1000, 1000, P2D);
+  size(1000, 700, P2D);
   pixelDensity(displayDensity());
 
   destination = createImage(width, height, ARGB);
@@ -32,6 +36,19 @@ void setup() {
   
   ps.setEmitter(mainFireX,mainFireY);
   
+  hotspots = new ArrayList<PVector>();
+  hotspotSystems = new ArrayList<ParticleSystem>();
+  int numHotspots = 4;
+  for(int i = 0; i < numHotspots; ++i) {
+    PVector newPos = new PVector(random(width), random(height)); 
+    hotspots.add(newPos);
+    ParticleSystem newPs = new ParticleSystem(50);
+    newPs.setEmitter(newPos);
+    newPs.setGravity(new PVector(0,0));
+    newPs.setMaxLifespan(50);
+    hotspotSystems.add(newPs);
+  }
+  
   // Writing to the depth buffer is disabled to avoid rendering
   // artifacts due to the fact that the particles are semi-transparent
   // but not z-sorted.
@@ -41,6 +58,7 @@ void setup() {
 } 
 
 void draw () {
+  background(11*0.35, 60*0.35, 10*0.35);
   background(0);
   //image(paperBackground, 0, 0);
   
@@ -50,33 +68,7 @@ void draw () {
   
   ps.display();
   
-  paperBackground.loadPixels();
-  destination.loadPixels();
-
-  for(int x = 0; x < width; ++x) {
-    for(int y = 0; y < height; ++y) {
-      int loc = x + y * width;
-      float val = impactArray[loc];
-      int imageLoc = x + y * paperBackground.width;
-      if(val == 0.f) {
-        //destination.pixels[loc] = paperBackground.pixels[imageLoc];
-        continue;
-      }
-      
-      float r = red(paperBackground.pixels[imageLoc]);
-      float g = green(paperBackground.pixels[imageLoc]);
-      float b = blue(paperBackground.pixels[imageLoc]);
-      // val == 0 is no damage, val == 1 is full damage
-      // if not damaged, draw white. if full damaged, draw black
-      float drawWeight = (1.f - val) * 255;
-      // make it darker, but not fully black
-      drawWeight = ((1.f - val) * 0.75 + 0.25) * 255;
-      destination.pixels[loc] = color(r, g, b, drawWeight);
-    }
-  }
-  destination.updatePixels();
-  
-  image(destination, 0, 0);
+  // Do the wind calculations
   
   // Always decrement the windClickCounter
   windClickCounter = windClickCounter - 0.125;
@@ -93,15 +85,74 @@ void draw () {
   
   PVector windStrength = new PVector(windStrengthX, windStrengthY);
   
-  //println(windStrength);
-  
-  ps.setGravity(windStrength);
-  
+  // Update the hotspots
+  for(int i = 0; i < hotspotSystems.size(); ++i) {
+    ParticleSystem p = hotspotSystems.get(i);
+    PVector pos = hotspots.get(i);
+    // Has it been touched?
+    boolean isTouched = isPointTouched(pos, impactArray);
+    if(isTouched) {
+      p.addParticlesToTotal(1500);
+      p.setMaxLifespan(255);
+      p.setGravity(windStrength);
+      p.processImpactArray(impactArray);
+      p.setGravity(windStrength);
+    }    
+    p.update();
+    if(numLoops > 255) {
+      p.display();
+    }
+    p.setEmitter(pos);
+  }
+
+  // Update the main fire
+  ps.setGravity(windStrength);  
   ps.setEmitter(mainFireX, mainFireY);
+  
+  paperBackground.loadPixels();
+  destination.loadPixels();
+
+  for(int x = 0; x < width; ++x) {
+    for(int y = 0; y < height; ++y) {
+      int loc = x + y * width;
+      float val = impactArray[loc];
+      int imageLoc = x + y * paperBackground.width;
+      if(val == 0.f) {
+        //destination.pixels[loc] = color(11*0.35, 60*0.35, 10*0.35);
+        //destination.pixels[loc] = paperBackground.pixels[imageLoc];
+        continue;
+      }
+      
+      float r = red(paperBackground.pixels[imageLoc]);
+      float g = green(paperBackground.pixels[imageLoc]);
+      float b = blue(paperBackground.pixels[imageLoc]);
+      // val == 0 is no damage, val == 1 is full damage
+      // if not damaged, draw white. if full damaged, draw black
+      float drawWeight = (1.f - val) * 255;
+      // make it darker, but not fully black
+      drawWeight = ((1.f - val) * 0.75 + 0.25) * 255;
+      destination.pixels[loc] = color(r, g, b, drawWeight);
+    }
+  }
+  destination.updatePixels();
+  image(destination, 0, 0);
+  
+
+  numLoops++;
   
   //fill(255);
   //textSize(12);
   //text("Frame rate: " + int(frameRate), 10, 20); 
+}
+
+boolean isPointTouched(PVector point, float[] arr) {
+  int loc = (int)((int)point.x + (int)point.y * width);
+  if(arr[loc] != 0.f) {
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 void keyPressed() {
