@@ -22,6 +22,34 @@ class ParticleSystem {
     }
   }
   
+  // Apply impacts when a collision between particle and arr location, but
+  // also diminish the life of a particle when it hits an undamaged particle
+  void processImpactArray(float[] arr) {
+    for (Particle p : particles) {
+      PVector pos = p.getPos();
+      float lifespan = p.normalisedLifeSpan();
+      //println("normalised lifespan " + lifespan);
+      int loc = (int)((int)pos.x + (int)pos.y * width);
+      if(pos.x < 0 || pos.y < 0) {
+        continue;
+      }
+      if(pos.x >= width || pos.y >= height) {
+        continue;
+      }
+      float currentArrVal = arr[loc];
+      // If the array value has maximum damage, then the particle continues on as normal
+      if(currentArrVal == 1.f) {
+        continue;
+      }
+      // Otherwise, do some damage to the array value, and diminish
+      // the particle's life
+      float newArrVal = min(currentArrVal + 0.1f, 1.f);
+      arr[loc] = newArrVal;
+      //p.setNormalisedLifeSpan(lifespan * 0.05f);
+      p.setStopMovingTillDeath(true);
+    }
+  }
+  
   void updateImpactArray(float[] arr) {
     //println("Updating impact array");
     final float adder = 50.f;

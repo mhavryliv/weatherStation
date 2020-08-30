@@ -8,12 +8,14 @@ class Particle {
   float partSize;
   
   PVector gravity;
+  boolean stopMovingTillDeath;
 
   PVector currentPosition;
 
   Particle(PVector startGravity) {
     currentPosition = new PVector(0, 0);
     gravity = startGravity;
+    stopMovingTillDeath = false;
     partSize = random(5,30);
     part = createShape();
     part.beginShape(QUAD);
@@ -37,6 +39,15 @@ class Particle {
   float normalisedLifeSpan() {
     return (float)lifespan / (float)lifespanMax;
   }
+  
+  void setNormalisedLifeSpan(float newVal) {
+    lifespan = constrain((int)(newVal * lifespanMax), 0, lifespanMax);
+    //println("lifespan set to " + lifespan);
+  }
+  
+  void setStopMovingTillDeath(boolean val) {
+    stopMovingTillDeath = val;
+  }
 
   PShape getShape() {
     return part;
@@ -57,6 +68,7 @@ class Particle {
     part.translate(x, y); 
     currentPosition.x = x;
     currentPosition.y = y;
+    stopMovingTillDeath = false;
   }
   
   boolean isDead() {
@@ -69,15 +81,23 @@ class Particle {
   
 
   public void update() {
-    lifespan = lifespan - 1;
+    float lifespanDecrement = stopMovingTillDeath ? 0.75 : 1;
+    lifespan = lifespan - lifespanDecrement;
     if(lifespan < 0) {
       lifespan = 0;
     }
     velocity.add(gravity);
     
     //part.setTint(color(255,lifespan));
-    part.setTint(color(240, 94, 27, lifespan)); // use orange-red colour
-    part.translate(velocity.x, velocity.y);
-    currentPosition.add(velocity);
+    part.setTint(color(240, 94, 27, lifespan)); // use orange-red colour      
+    if(!stopMovingTillDeath) {
+      part.translate(velocity.x, velocity.y);
+      currentPosition.add(velocity);
+      // If we're not attached to the edge of the texture, show nothing
+      part.setTint(color(240, 94, 27, lifespan)); // use orange-red colour      
+    }
+    else {
+      part.setTint(color(240*0.75, 94*0.75, 27*0.75, lifespan)); // use orange-red colour      
+    }
   }
 }

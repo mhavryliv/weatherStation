@@ -12,14 +12,22 @@ float windXComponent = 0.f;
 float windYComponent = 0.f;
 
 float[] impactArray;
+PImage paperBackground;
+
+PImage destination;
 
 void setup() {  
-  size(500, 500, P2D);
+  size(1000, 1000, P2D);
+  pixelDensity(displayDensity());
+
+  destination = createImage(width, height, ARGB);
+
   impactArray = new float[width*height];
   mainFireX = width/2;
   mainFireY = height/2;
   //orientation(LANDSCAPE);
   sprite = loadImage("sprite.png");
+  paperBackground = loadImage("paper_1000px.jpg");
   ps = new ParticleSystem(1000);
   
   ps.setEmitter(mainFireX,mainFireY);
@@ -34,20 +42,42 @@ void setup() {
 
 void draw () {
   background(0);
+  //image(paperBackground, 0, 0);
   
   ps.update();
-  ps.updateImpactArray(impactArray);
+  //ps.updateImpactArray(impactArray);
+  ps.processImpactArray(impactArray);
   
-  loadPixels();
+  ps.display();
+  
+  paperBackground.loadPixels();
+  destination.loadPixels();
+
   for(int x = 0; x < width; ++x) {
     for(int y = 0; y < height; ++y) {
       int loc = x + y * width;
-      pixels[loc] = color(impactArray[loc]);
+      float val = impactArray[loc];
+      int imageLoc = x + y * paperBackground.width;
+      if(val == 0.f) {
+        //destination.pixels[loc] = paperBackground.pixels[imageLoc];
+        continue;
+      }
+      
+      float r = red(paperBackground.pixels[imageLoc]);
+      float g = green(paperBackground.pixels[imageLoc]);
+      float b = blue(paperBackground.pixels[imageLoc]);
+      // val == 0 is no damage, val == 1 is full damage
+      // if not damaged, draw white. if full damaged, draw black
+      float drawWeight = (1.f - val) * 255;
+      // make it darker, but not fully black
+      drawWeight = ((1.f - val) * 0.75 + 0.25) * 255;
+      destination.pixels[loc] = color(r, g, b, drawWeight);
     }
   }
-  updatePixels();
+  destination.updatePixels();
   
-  ps.display();
+  image(destination, 0, 0);
+  
   // Always decrement the windClickCounter
   windClickCounter = windClickCounter - 0.125;
   windClickCounter = Math.max(0, windClickCounter);
@@ -69,9 +99,9 @@ void draw () {
   
   ps.setEmitter(mainFireX, mainFireY);
   
-  fill(255);
-  textSize(12);
-  text("Frame rate: " + int(frameRate), 10, 20); 
+  //fill(255);
+  //textSize(12);
+  //text("Frame rate: " + int(frameRate), 10, 20); 
 }
 
 void keyPressed() {

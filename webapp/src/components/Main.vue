@@ -46,17 +46,16 @@
       </div>
     </div>
 
-    <hr>
       <div class="historic_data_wrapper">
-        <h3>Past {{numHoursForHistory}} hours</h3>
-        <button @click="reloadHistoricData">Reload</button>
-
         <div class="small">
           <div>Temperature</div>
           <line-chart :chart-data="temperatureCollection" :options="chartOptions" />
 
           <div>Wind</div>
           <line-chart :chart-data="windCollection" :options="chartOptions" />
+
+          <h3>Past {{numHoursForHistory}} hours</h3>
+          <button @click="reloadHistoricData">Reload</button>
 
         </div>
       </div>
@@ -91,7 +90,7 @@ export default {
         count: 0,
         events: []
       },
-      numHoursForHistory: 12,
+      numHoursForHistory: 1,
       temperatureCollection: {},
       windCollection: {},
       chartOptions: {
@@ -235,7 +234,7 @@ export default {
         // const date = new Date(events[i].time);
         let date;
         if(i !== (events.length - 1)) {
-          date = this.roundTimeToHalfHour(events[i].time);
+          date = this.roundTimeToMinutes(events[i].time, 15);
         }
         else {
           date = new Date(events[i].time);
@@ -245,9 +244,9 @@ export default {
       }
       return labels;
     },
-    roundTimeToHalfHour(time) {
+    roundTimeToMinutes(time, minutes) {
       const date = new Date(time);
-      var coeff = 1000 * 60 * 30;
+      var coeff = 1000 * 60 * minutes;
       var rounded = new Date(Math.round(date.getTime() / coeff) * coeff)
       return rounded;
     },
@@ -321,6 +320,9 @@ export default {
         return console.log("No time range to fill temperature data!");
       }
       let numSamples = this.numHoursForHistory;
+      if(numSamples < 6) {
+        numSamples = 4;
+      }
       // numSamples = 4;
       const sampledEventsAndIndices
       = this.sampledEvents(this.historicData.events, timerange, numSamples);
@@ -408,11 +410,11 @@ export default {
       this.windCollection = {
         labels: labels,
         datasets: [
-          {
-            label: "Gust (Km/h)",
-            backgroundColor: 'rgba(255, 0, 0, 0.5)',
-            data: windData.gusts
-          },
+          // {
+          //   label: "Gust (Km/h)",
+          //   backgroundColor: 'rgba(255, 0, 0, 0.5)',
+          //   data: windData.gusts
+          // },
           {
             label: "Average (Km/h)",
             backgroundColor: 'rgba(0, 250, 0, 0.55)',
