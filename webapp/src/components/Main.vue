@@ -13,36 +13,23 @@
       />
     </div>
     <div class="current_weather_display" v-else>
-      <div class="current_date">{{currentDate}}</div>
-      <div>
-        <div class="atmos">
-          <div class="item">
-            <div class="label">Temperature:</div>
-            <div class="value">{{currentWeather.temperature}}</div>
-          </div>
-          <div class="item">
-            <div class="label">Humidity:</div>
-            <div class="value">{{currentWeather.humidity}}</div>
-          </div>
-          <div class="item">
-            <div class="label">Pressure:</div>
-            <div class="value">{{currentWeather.pressure}}</div>
-          </div>
-        </div>
-        <div class="atmos">
-          <div class="item">
-            <div class="label">Wind speed:</div>
-            <div class="value">{{currentWindSpeed}}</div>
-          </div>
-          <div class="item">
-            <div class="label">Wind gust:</div>
-            <div class="value">{{currentWindGust}}</div>
-          </div>
-          <div class="item">
-            <div class="label">Wind direction:</div>
-            <div class="value">{{currentWindDir}}</div>
-          </div>
-        </div>
+      <div class="weather_table">
+        <table>
+          <thead>
+            <th>Time</th>
+            <th>Temperature (c)</th>
+            <th>Humidity (%)</th>
+            <th>Wind (Km/H)</th>
+            <th>Rainfaill (mm)</th>
+          </thead>
+          <tr v-for="(data, i) in tableData" :key="i">
+            <td>{{data.time}}</td>
+            <td>{{data.temperature}}</td>
+            <td>{{data.humidity}}</td>
+            <td>{{averageOfArr(data.wind_speed)}}</td>
+            <td>{{data.water_mm}}</td>
+          </tr>
+        </table>
       </div>
     </div>
 
@@ -90,7 +77,7 @@ export default {
         count: 0,
         events: []
       },
-      numHoursForHistory: 1,
+      numHoursForHistory: 4,
       temperatureCollection: {},
       windCollection: {},
       chartOptions: {
@@ -118,12 +105,35 @@ export default {
     }
   },
   computed: {
+    tableData() {
+      const limit = 10;
+      let data = [];
+      const toDo = Math.min(limit, this.historicData.events.length);
+      const startPoint = this.historicData.events.length - toDo;
+      const endPoint = startPoint + toDo;
+      const dateOpt =
+      { weekday: 'long',
+      hour: 'numeric', minute: 'numeric', second: 'numeric'};
+      for(var i = startPoint; i < endPoint; ++i) {
+        let event = this.historicData.events[i];
+        
+        event.time = new Date(event.time).toLocaleDateString('en-AU', dateOpt);
+        const windavg = this.averageOfArr(event.wind_speed);
+        event.wind_speed = this.round(windavg, 2);
+        data.push(this.historicData.events[i]);
+      }
+      let result = [];
+      for(var i = data.length - 1; i != -1; --i) {
+        result.push(data[i]);
+      }
+      return result;
+    },
     currentDate() {
       if(this.currentWeather.time) {
         const date = new Date(this.currentWeather.time);
         var options = 
-        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', second: 'numeric'};
+        { weekday: 'numeric', year: 'numeric', month: 'long', day: 'numeric',
+        hour: 'numeric', minute: 'numeric'};
         return date.toLocaleDateString('en-AU', options);
       }
     },
@@ -474,14 +484,12 @@ export default {
 <style lang="scss">
 .current_weather_display {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  margin-left: 20px;
+  justify-content: center;
   text-align: left;
   
   .atmos {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: wrap;
     margin: 10px 0 0px 0;
     .item {

@@ -55,6 +55,8 @@ class ParticleSystem {
       arr[loc] = newArrVal;
       //p.setNormalisedLifeSpan(lifespan * 0.05f);
       p.setStopMovingTillDeath(true);
+      // And boost it's lifespan a bit
+      p.setNormalisedLifeSpan(lifespan * 1.5f);
     }
   }
   

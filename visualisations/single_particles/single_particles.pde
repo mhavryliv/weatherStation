@@ -59,7 +59,7 @@ void setup() {
 
 void draw () {
   background(11*0.35, 60*0.35, 10*0.35);
-  background(0);
+  //background(0);
   //image(paperBackground, 0, 0);
   
   ps.update();
