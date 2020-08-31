@@ -209,12 +209,14 @@ export default {
     }
   },
   methods: {
-    async reloadHistoricData() {
+    async reloadHistoricData(isReloading) {
       if(this.historicData.loading) {
         console.log("Already loading data");
         return;
       }
-      this.historicData.loading = true;
+      if(!isReloading) {
+        this.historicData.loading = true;
+      }
       const numseconds = this.numHoursForHistory * 60 * 60;
       const data = await this.getEventHistory(numseconds);
       this.historicData.loading = false;
@@ -244,8 +246,10 @@ export default {
       return data;
       
     },
-    async getCurrentData() {
-      this.currentWeather.loading = true;
+    async getCurrentData(isReloading) {
+      if(!isReloading) {
+        this.currentWeather.loading = true;
+      }
       const postData = {
         getCurrent: true
       }
@@ -694,17 +698,17 @@ export default {
 
       return data[dir];
     },
-    reloadSelf() {
-      this.getCurrentData();
-      this.reloadHistoricData();
+    reloadSelf(isReloading) {
+      this.getCurrentData(isReloading);
+      this.reloadHistoricData(isReloading);
       setTimeout(() => {
-        this.reloadSelf();
+        this.reloadSelf(true);
       }, 60000);
     }
   },
   mounted() {
     self = this;
-    this.reloadSelf();
+    this.reloadSelf(false);
     
     // theGauge.data([0, 30]);
     if(ws) {

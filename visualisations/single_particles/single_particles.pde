@@ -214,13 +214,14 @@ void handleWindInput(String windDir) {
 
 void webSocketEvent(String msg){
   JSONObject data = parseJSONObject(msg);
-  //println(msg);
+  println(msg);
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
   //println(windDir);
   if(isWaterClick) {
     println("Water!!!");
+    println(msg);
   }
   if(isWindClick) {
     handleWindInput(windDir);

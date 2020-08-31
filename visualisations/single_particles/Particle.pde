@@ -101,6 +101,8 @@ class Particle {
       part.setTint(color(240, 94, 27, lifespan)); // use orange-red colour      
     }
     else {
+      // do a bit of random colour fluctuation
+      //float alpha = random(0-lifespan*0.5, lifespan*0.5) + lifespan*0.5;
       part.setTint(color(240*0.75, 94*0.75, 27*0.75, lifespan)); // use orange-red colour      
     }
   }
