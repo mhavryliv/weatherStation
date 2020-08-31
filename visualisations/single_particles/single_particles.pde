@@ -220,7 +220,7 @@ void webSocketEvent(String msg){
   String windDir = data.getString("wdir");
   //println(windDir);
   if(isWaterClick) {
-    //println("Water!!!");
+    println("Water!!!");
   }
   if(isWindClick) {
     handleWindInput(windDir);

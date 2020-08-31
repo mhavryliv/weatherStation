@@ -13,20 +13,23 @@
       />
     </div>
     <div class="current_weather_display" v-else>
+      <div>{{currentDate}}</div>
+      <div style="font-style:italic;margin:10px 0">
+        Minutely readings for past 10 minutes</div>
       <div class="weather_table">
         <table>
           <thead>
-            <th>Time</th>
-            <th>Temperature (c)</th>
+            <th>Temp. (C)</th>
             <th>Humidity (%)</th>
             <th>Wind (Km/H)</th>
-            <th>Rainfaill (mm)</th>
+            <th>Wind direction</th>
+            <th>Rainfall (mm)</th>
           </thead>
           <tr v-for="(data, i) in tableData" :key="i">
-            <td>{{data.time}}</td>
             <td>{{data.temperature}}</td>
             <td>{{data.humidity}}</td>
-            <td>{{averageOfArr(data.wind_speed)}}</td>
+            <td>{{data.wind_speed}}</td>
+            <td>{{data.main_wind_dir}}</td>
             <td>{{data.water_mm}}</td>
           </tr>
         </table>
@@ -34,15 +37,13 @@
     </div>
 
       <div class="historic_data_wrapper">
+        <h3>Past {{numHoursForHistory}} hours</h3>
         <div class="small">
-          <div>Temperature</div>
+          <div>Temperature (Celcius)</div>
           <line-chart :chart-data="temperatureCollection" :options="chartOptions" />
-
-          <div>Wind</div>
+          
+          <div style="margin-top:30px;">Wind Average (Km/H)</div>
           <line-chart :chart-data="windCollection" :options="chartOptions" />
-
-          <h3>Past {{numHoursForHistory}} hours</h3>
-          <button @click="reloadHistoricData">Reload</button>
 
         </div>
       </div>
@@ -77,7 +78,7 @@ export default {
         count: 0,
         events: []
       },
-      numHoursForHistory: 4,
+      numHoursForHistory: 12,
       temperatureCollection: {},
       windCollection: {},
       chartOptions: {
@@ -112,15 +113,18 @@ export default {
       const startPoint = this.historicData.events.length - toDo;
       const endPoint = startPoint + toDo;
       const dateOpt =
-      { weekday: 'long',
-      hour: 'numeric', minute: 'numeric', second: 'numeric'};
+      {
+      hour: 'numeric', minute: 'numeric'};
       for(var i = startPoint; i < endPoint; ++i) {
-        let event = this.historicData.events[i];
+        let event = JSON.parse(JSON.stringify(this.historicData.events[i]));
         
         event.time = new Date(event.time).toLocaleDateString('en-AU', dateOpt);
         const windavg = this.averageOfArr(event.wind_speed);
         event.wind_speed = this.round(windavg, 2);
-        data.push(this.historicData.events[i]);
+        console.log(event);
+        const mostCommonWindDir = this.mostCommonWindDir(event.wind_dir);
+        event.main_wind_dir = mostCommonWindDir;
+        data.push(event);
       }
       let result = [];
       for(var i = data.length - 1; i != -1; --i) {
@@ -132,7 +136,7 @@ export default {
       if(this.currentWeather.time) {
         const date = new Date(this.currentWeather.time);
         var options = 
-        { weekday: 'numeric', year: 'numeric', month: 'long', day: 'numeric',
+        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
         hour: 'numeric', minute: 'numeric'};
         return date.toLocaleDateString('en-AU', options);
       }
@@ -244,7 +248,7 @@ export default {
         // const date = new Date(events[i].time);
         let date;
         if(i !== (events.length - 1)) {
-          date = this.roundTimeToMinutes(events[i].time, 15);
+          date = this.roundTimeToMinutes(events[i].time, 30);
         }
         else {
           date = new Date(events[i].time);
@@ -329,7 +333,7 @@ export default {
       if(!timerange) {
         return console.log("No time range to fill temperature data!");
       }
-      let numSamples = this.numHoursForHistory;
+      let numSamples = this.numHoursForHistory + 1; // add 1 so it rounds properly
       if(numSamples < 6) {
         numSamples = 4;
       }
@@ -450,6 +454,25 @@ export default {
         ]
       }
     },
+    mostCommonWindDir(arr) {
+      let map = {};
+      for(var i = 0; i < arr.length; ++i) {
+        if(!map[arr[i]]) {
+          map[arr[i]] = 1;
+        }
+        else {
+          map[arr[i]] = map[arr[i]] + 1;
+        }
+      }
+      const keys = Object.keys(map);
+      let maxObj = keys[0];
+      for(var i = 1; i < keys.length; ++i) {
+        if(map[keys[i]] > map[maxObj]) {
+          maxObj = keys[i];
+        }
+      }
+      return maxObj;
+    },
     averageOfArr(arr) {
       let sum = 0;
       for(var i = 0; i < arr.length; ++i) {
@@ -485,7 +508,8 @@ export default {
 .current_weather_display {
   display: flex;
   justify-content: center;
-  text-align: left;
+  flex-direction: column;
+  width: 100%;
   
   .atmos {
     display: flex;
@@ -505,8 +529,29 @@ export default {
   }
 }
 
+.weather_table{
+  width: 100%;
+  table  {
+    width: 100%;
+  }
+  
+  td {
+    padding-left: 5px;
+    text-align: left;
+  }
+  th {
+    padding-left: 5px;
+    text-align: left;
+  }
+
+}
+
 .small {
   max-width: 600px;
-  margin:  150px auto;
+  margin: auto;
+  // display: flex;
+  // flex-direction: column;
+  // align-content: center;;
+  // margin:  150px auto;
 }
 </style>
