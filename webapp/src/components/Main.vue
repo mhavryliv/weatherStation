@@ -1,6 +1,6 @@
 <template>
   <div class="main">
-    <h2>Mollymook Beach Weather</h2>
+    <h1>Mollymook Beach Weather</h1>
     <!-- <h2>Current Weather</h2> -->
     <div v-show=currentWeather.loading>Loading...
       <loading-progress
@@ -13,10 +13,11 @@
       />
     </div>    
     <div v-show=!currentWeather.loading class="current_weather_display">
-      <div id="windandcurtemp">
+      <div id="windandcurtemp" :class="$mq">
         <div id="windandcurtempatmos">
           <h2>Temperature: {{currentWeather.temperature}} °C</h2>
           <h2>Humidity: {{currentWeather.humidity}}%</h2>
+          <h2>Wind speed: {{liveWindSpeed}} km/h</h2>
         </div>
         <div id="container"></div>
 
@@ -91,6 +92,7 @@ export default {
         return;
       }
       if(!newVal.loading) {
+        this.hasUpdatedGauge = true;
         setTimeout(() => {
           this.doAnyChartStuff();
         }, 100);
@@ -101,6 +103,7 @@ export default {
   data() {
     return {
       hasUpdatedGauge: false,
+      liveWindSpeed: 0,
       currentWeather: {loading: false},
       historicData: {
         loading: false,
@@ -690,12 +693,18 @@ export default {
       }
 
       return data[dir];
+    },
+    reloadSelf() {
+      this.getCurrentData();
+      this.reloadHistoricData();
+      setTimeout(() => {
+        this.reloadSelf();
+      }, 60000);
     }
   },
   mounted() {
     self = this;
-    this.getCurrentData();
-    this.reloadHistoricData();
+    this.reloadSelf();
     
     // theGauge.data([0, 30]);
     if(ws) {
@@ -712,6 +721,7 @@ export default {
         let windDir = data.wdir;
         windDir = self.windNumberFromDir(windDir);
         const windSpeed = data.wspeed;
+        self.liveWindSpeed = self.round(windSpeed, 2);
         if(theGauge) {
           theGauge.data([windDir, windSpeed])
         }
@@ -731,6 +741,7 @@ export default {
   justify-content: center;
   flex-direction: column;
   width: 100%;
+  align-items: center;
   
   .atmos {
     display: flex;
@@ -778,11 +789,20 @@ export default {
 
 #container {
   height: 350px;
+  min-width: 350px;
 }
 
 #windandcurtemp {
   display: flex;
-  justify-content: space-around;
+  width: 80%;
+  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  text-align: left;
+  &.sm {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
 }
 </style>

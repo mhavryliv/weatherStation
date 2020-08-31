@@ -6,12 +6,15 @@ class MovAvg {
   double * data_;
   int size_;
   int counter_;
+  double cachedAverage_;
+  bool hasChanged_;
 
   public:
   MovAvg(int s) {
     size_ = s;
     data_ = new double[size_];
     counter_ = 0;
+    hasChanged_ = true;
   }
 
   ~MovAvg() {
@@ -26,16 +29,21 @@ class MovAvg {
     if(counter_ == size_) {
       counter_ = 0;
     }
+    hasChanged_ = true;
     return getCurAvg();    
   }
 
   double getCurAvg() volatile {
+    if(!hasChanged_) {
+      return cachedAverage_;
+    }
     // Sum all current values
     double sum = 0.0;
     for(int i = 0; i < size_; ++i) {
       sum += data_[i];
     }
-    return sum / (double)size_;
+    cachedAverage_ = sum / (double)size_;
+    return cachedAverage_;
   }
 
   void reset() volatile {

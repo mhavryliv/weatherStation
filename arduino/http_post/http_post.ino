@@ -388,7 +388,7 @@ String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick, bool
   wsdoc["wdir"] = windDir;
   wsdoc["waterclick"] = isWaterClick;
   const double freq = 1.0 / (windSpeedAvg.getCurAvg() / 1000.0);
-  float windspeed = freq * 2.4;
+  float windspeed = (float)freq * 2.4f;
   wsdoc["wspeed"] = windspeed;
   wsdoc["time"] = millis();
   if (includeAtmospheric)  {

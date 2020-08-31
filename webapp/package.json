@@ -8,10 +8,12 @@
     "deploy": "aws s3 sync ./dist s3://mollyweathersite"
   },
   "dependencies": {
+    "@wearelucid/vue-mq": "^1.1.0",
     "axios": "^0.20.0",
     "chart.js": "^2.9.3",
     "vue": "^2.6.11",
     "vue-chartjs": "^3.5.1",
+    "vue-mq": "^1.0.1",
     "vue-progress-path": "0.0.2"
   },
   "devDependencies": {
