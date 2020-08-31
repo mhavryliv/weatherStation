@@ -2,7 +2,7 @@
   <div class="main">
     <h2>Mollymook Beach Weather</h2>
     <!-- <h2>Current Weather</h2> -->
-    <div v-if=currentWeather.loading>Loading...
+    <div v-show=currentWeather.loading>Loading...
       <loading-progress
         :indeterminate='true'
         :hide-background='false'
@@ -11,8 +11,17 @@
         width="200"
         height="4"
       />
-    </div>
-    <div class="current_weather_display" v-else>
+    </div>    
+    <div v-show=!currentWeather.loading class="current_weather_display">
+      <div id="windandcurtemp">
+        <div id="windandcurtempatmos">
+          <h2>Temperature: {{currentWeather.temperature}} °C</h2>
+          <h2>Humidity: {{currentWeather.humidity}}%</h2>
+        </div>
+        <div id="container"></div>
+
+      </div>
+
       <div>{{currentDate}}</div>
       <div style="font-style:italic;margin:10px 0">
         Minutely readings for past 10 minutes</div>
@@ -67,14 +76,31 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 
 import LineChart from './LineChart.js'
 
+var self;
+var theGauge;
+var ws;
 
 export default {
   name: 'Main',
   components: {
     LineChart
   },
+  watch: {
+    currentWeather(newVal) {
+      if(this.hasUpdatedGauge) {
+        return;
+      }
+      if(!newVal.loading) {
+        setTimeout(() => {
+          this.doAnyChartStuff();
+        }, 100);
+        
+      }
+    }
+  },
   data() {
     return {
+      hasUpdatedGauge: false,
       currentWeather: {loading: false},
       historicData: {
         loading: false,
@@ -133,7 +159,6 @@ export default {
         event.wind_avg = this.round(windavg, 1);
         event.wind_max = this.round(windmax, 1);
         event.water_mm = this.round(event.water_mm, 2);
-        console.log(event);
         const mostCommonWindDir = this.mostCommonWindDir(event.wind_dir);
         event.main_wind_dir = mostCommonWindDir;
         data.push(event);
@@ -533,12 +558,168 @@ export default {
     round(number, decimalPlaces) {
       const factorOfTen = Math.pow(10, decimalPlaces)
       return Math.round(number * factorOfTen) / factorOfTen
+    },
+    doAnyChartStuff() {
+     anychart.onDocumentReady(function () {
+        var gauge = anychart.gauges.circular();
+        gauge
+          .fill('#fff')
+          .stroke(null)
+          .padding(0)
+          .margin(50)
+          .startAngle(0)
+          .sweepAngle(360);
+
+        gauge
+          .axis()
+          .labels()
+          .padding(3)
+          .position('outside')
+          .format('{%Value}\u00B0');
+
+        gauge.data([0, 0]);
+
+        gauge
+          .axis()
+          .scale()
+          .minimum(0)
+          .maximum(360)
+          .ticks({ interval: 45 });
+          // .minorTicks({ interval: 10 });
+
+        gauge
+          .axis()
+          .fill('#7c868e')
+          .startAngle(0)
+          .sweepAngle(-360)
+          .width(1)
+          .ticks({
+            type: 'line',
+            fill: '#7c868e',
+            length: 4,
+            position: 'outside'
+          });
+
+        gauge
+          .axis(1)
+          .fill('#7c868e')
+          .startAngle(270)
+          .radius(40)
+          .sweepAngle(180)
+          .width(1)
+          .ticks({
+            type: 'line',
+            fill: '#7c868e',
+            length: 4,
+            position: 'outside'
+          });
+
+        gauge
+          .axis(1)
+          .labels()
+          .padding(3)
+          .position('outside')
+          .format('{%Value} km/h');
+
+        gauge
+          .axis(1)
+          .scale()
+          .minimum(0)
+          .maximum(30)
+          .ticks({ interval: 10 });
+          // .minorTicks({ interval: 1 });
+
+        gauge.title().padding(0).margin([0, 0, 10, 0]);
+
+        gauge
+          .marker()
+          .fill('#64b5f6')
+          .stroke(null)
+          .size('15%')
+          .zIndex(120)
+          .radius('97%');
+
+        gauge
+          .needle()
+          .fill('#1976d2')
+          .stroke(null)
+          .axisIndex(1)
+          .startRadius('6%')
+          .endRadius('38%')
+          .startWidth('2%')
+          .middleWidth(null)
+          .endWidth('0');
+
+        gauge.cap().radius('4%').fill('#1976d2').enabled(true).stroke(null);
+
+        // set container id for the chart
+        gauge.container('container');
+
+        // initiate chart drawing
+        gauge.draw();
+
+        theGauge = gauge;
+
+        var alltspans = document.getElementsByTagName("tspan");
+        for(var i = 0; i < 8; ++i) {
+          alltspans[i].innerHTML = self.windNamesForGauge()[i];
+          if(i === 4) {
+            let curx = parseFloat(alltspans[i].getAttribute('x'));
+            alltspans[i].setAttribute('x', curx + 10);
+          }
+        }
+        document.getElementsByClassName('anychart-credits')[0].style.display = "none";
+      });
+    },
+    windNames() {
+      return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    },
+    windNamesForGauge() {
+      return ['N', 'NW', 'W', 'SW', 'S', 'SE', 'E', 'NE'];
+    },
+    windNumberFromDir(dir) {
+      const data = {
+        N: 0,
+        NW: 45,
+        W: 90,
+        SW: 135,
+        S: 180,
+        SE: 225,
+        E: 270,
+        NE: 315
+      }
+
+      return data[dir];
     }
   },
   mounted() {
+    self = this;
     this.getCurrentData();
     this.reloadHistoricData();
     
+    // theGauge.data([0, 30]);
+    if(ws) {
+      console.log("Not creating another ws");
+      return;
+    }
+    else {
+      ws = new WebSocket('ws://realtimeweather-molly1.flyingaspidistra.net:8123');
+      ws.onopen = () => {
+        console.log("Opened websocket");
+      }
+      ws.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        let windDir = data.wdir;
+        windDir = self.windNumberFromDir(windDir);
+        const windSpeed = data.wspeed;
+        if(theGauge) {
+          theGauge.data([windDir, windSpeed])
+        }
+      }
+    }
+  },
+  beforeDestroy() {
+    ws.close();
   }
 
 }
@@ -593,5 +774,15 @@ export default {
   // flex-direction: column;
   // align-content: center;;
   // margin:  150px auto;
+}
+
+#container {
+  height: 350px;
+}
+
+#windandcurtemp {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 </style>
