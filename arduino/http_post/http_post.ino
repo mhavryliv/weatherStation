@@ -6,8 +6,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <ESPmDNS.h>
-//#include <WiFiUdp.h>
-//#include <ArduinoOTA.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 
 #include <ArduinoWebsockets.h>
 #include <WiFi.h>
@@ -136,7 +136,7 @@ void setup() {
 
 void loop() {
   if (isDoingWifi) {
-    //    ArduinoOTA.handle();
+    ArduinoOTA.handle();
   }
   frameStartTime = millis();
   // Do calculations on collected data
@@ -319,41 +319,41 @@ void setupWifi() {
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-  //  Serial.println("Setting up OTA");
-  //  // Setup the OTA programming
-  //   ArduinoOTA.setPort(3232);
-  //   ArduinoOTA.setHostname("weather_station_arduino_1");
-  //   ArduinoOTA.setPassword("unisux");
-  //
-  //  ArduinoOTA
-  //    .onStart([]() {
-  //      String type;
-  //      if (ArduinoOTA.getCommand() == U_FLASH)
-  //        type = "sketch";
-  //      else // U_SPIFFS
-  //        type = "filesystem";
-  //
-  //      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-  //      Serial.println("Start updating " + type);
-  //    })
-  //    .onEnd([]() {
-  //      Serial.println("\nEnd");
-  //    })
-  //    .onProgress([](unsigned int progress, unsigned int total) {
-  //      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  //    })
-  //    .onError([](ota_error_t error) {
-  //      Serial.printf("Error[%u]: ", error);
-  //      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-  //      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-  //      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-  //      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-  //      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  //    });
-  //
-  //  ArduinoOTA.begin();
-  //
-  //  Serial.println("OTA ready on port 3232");
+    Serial.println("Setting up OTA");
+    // Setup the OTA programming
+     ArduinoOTA.setPort(3232);
+     ArduinoOTA.setHostname("weather_station_arduino_1");
+     ArduinoOTA.setPassword("unisux");
+  
+    ArduinoOTA
+      .onStart([]() {
+        String type;
+        if (ArduinoOTA.getCommand() == U_FLASH)
+          type = "sketch";
+        else // U_SPIFFS
+          type = "filesystem";
+  
+        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+        Serial.println("Start updating " + type);
+      })
+      .onEnd([]() {
+        Serial.println("\nEnd");
+      })
+      .onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      })
+      .onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
+      });
+  
+    ArduinoOTA.begin();
+  
+    Serial.println("OTA ready on port 3232");
 }
 
 // Creates a JSON object out of required data, and returns as serialised string.
@@ -387,6 +387,9 @@ String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick, bool
   wsdoc["windclick"] = isWindClick;
   wsdoc["wdir"] = windDir;
   wsdoc["waterclick"] = isWaterClick;
+  const double freq = 1.0 / (windSpeedAvg.getCurAvg() / 1000.0);
+  float windspeed = freq * 2.4;
+  wsdoc["wspeed"] = windspeed;
   wsdoc["time"] = millis();
   if (includeAtmospheric)  {
     wsdoc["temp"] = temperature;
@@ -423,19 +426,10 @@ void sendHttpReq() {
     // Send HTTP POST request
     int httpResponseCode = http.POST(dataAsString);
 
-    if (httpResponseCode > 0) {
-      //        Serial.print("HTTP Response code: ");
-      //        Serial.println(httpResponseCode);
-      //        String payload = http.getString();
-      //        Serial.print("HTTP Response: ");
-      //        Serial.println(payload);
-    }
-    else {
-      // Don't bother printing if server is unreachable
-      //      if(httpResponseCode != -1) {
+    // Is there an error?
+    if (httpResponseCode <= 0) {
       Serial.print("Unexpected HTTP Error code: ");
       Serial.println(httpResponseCode);
-      //      }
     }
     // Free resources
     http.end();

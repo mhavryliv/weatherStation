@@ -21,14 +21,14 @@
           <thead>
             <th>Temp. (C)</th>
             <th>Humidity (%)</th>
-            <th>Wind (Km/H)</th>
+            <th>Wind Avg (Max)</th>
             <th>Wind direction</th>
             <th>Rainfall (mm)</th>
           </thead>
           <tr v-for="(data, i) in tableData" :key="i">
             <td>{{data.temperature}}</td>
             <td>{{data.humidity}}</td>
-            <td>{{data.wind_speed}}</td>
+            <td>{{data.wind_avg}} ({{data.wind_max}})</td>
             <td>{{data.main_wind_dir}}</td>
             <td>{{data.water_mm}}</td>
           </tr>
@@ -42,8 +42,11 @@
           <div>Temperature (Celcius)</div>
           <line-chart :chart-data="temperatureCollection" :options="chartOptions" />
           
-          <div style="margin-top:30px;">Wind Average (Km/H)</div>
-          <line-chart :chart-data="windCollection" :options="chartOptions" />
+          <div style="margin-top:30px;">Wind Speed</div>
+          <line-chart :chart-data="windCollection" :options="windChartOptions" />
+
+          <div>Water (mm)</div>
+          <line-chart :chart-data="waterCollection" :options="chartOptions" />
 
         </div>
       </div>
@@ -81,6 +84,7 @@ export default {
       numHoursForHistory: 12,
       temperatureCollection: {},
       windCollection: {},
+      waterCollection: {},
       chartOptions: {
         scales: {
           yAxes: [{
@@ -106,6 +110,11 @@ export default {
     }
   },
   computed: {
+    windChartOptions() {
+      const opt = JSON.parse(JSON.stringify(this.chartOptions));
+      opt.legend.display = true;
+      return opt;
+    },
     tableData() {
       const limit = 10;
       let data = [];
@@ -120,7 +129,10 @@ export default {
         
         event.time = new Date(event.time).toLocaleDateString('en-AU', dateOpt);
         const windavg = this.averageOfArr(event.wind_speed);
-        event.wind_speed = this.round(windavg, 2);
+        const windmax = this.maxOfArr(event.wind_speed);
+        event.wind_avg = this.round(windavg, 1);
+        event.wind_max = this.round(windmax, 1);
+        event.water_mm = this.round(event.water_mm, 2);
         console.log(event);
         const mostCommonWindDir = this.mostCommonWindDir(event.wind_dir);
         event.main_wind_dir = mostCommonWindDir;
@@ -347,16 +359,17 @@ export default {
       this.drawTemperatureChart(events);
 
       // Calculate the wind data. It should be the maximum, average winds
-      const windData = this.calculateWindData(indices, this.historicData.events);
+      const windData = this.calculateWindAndWaterData(indices, this.historicData.events);
       this.drawWindChart(windData, events);
-
+      this.drawWaterChart(windData.water, events);
     },
-    calculateWindData(indices, allEvents) {
+    calculateWindAndWaterData(indices, allEvents) {
       // Should return the same number of indices, but should take data from either 
       // side of each index and return average, and maximum.
       let avgs = [];
       let segmentGroupsWindSpeed = [];
       let segmentGroupsWindGust = [];
+      let waterTotals = [];
       // console.log("Looking from " + indices[0] + " to " + indices[indices.length-1]);
       // Loop till 2nd last element, and do last element individually after loop
       for(var i = 0; i < indices.length; ++i) {
@@ -383,26 +396,38 @@ export default {
         let thisSegmentWindGust = [];
         // console.log("On loop " + i + " which has index " + index);
         // console.log("Looking at index: " + prevMidPoint + " through to " + nextMidPoint);
+        let waterSum = 0;
         for(var j = prevMidPoint; j < nextMidPoint; ++j) {
           thisSegmentWindSpeeds = thisSegmentWindSpeeds.concat(allEvents[j].wind_speed);
           thisSegmentWindGust = thisSegmentWindGust.concat(allEvents[j].max_gust);
+          waterSum += allEvents[j].water_mm;
         }
         segmentGroupsWindSpeed.push(thisSegmentWindSpeeds);
         segmentGroupsWindGust.push(thisSegmentWindGust);
+        waterTotals.push(waterSum);
       }
       // console.log(segmentGroupsWindSpeed);
       // Now create averages and max gusts
       let windAverages = [];
       let maxGusts = [];
+      let waterCumulatives = [];
       for(var i = 0; i < indices.length; ++i) {
         const windAvg = this.averageOfArr(segmentGroupsWindSpeed[i]);
         windAverages.push(windAvg);
-        const maxGust = this.maxOfArr(segmentGroupsWindGust[i]);
+        const maxGust = this.maxOfArr(segmentGroupsWindSpeed[i]);
         maxGusts.push(maxGust);
+        const water = waterTotals[i];
+        if(i === 0) {
+          waterCumulatives.push(water);
+        }
+        else {
+          waterCumulatives.push(waterCumulatives[i-1] + water);
+        }
       }
       return {
         speeds: windAverages,
-        gusts: maxGusts
+        gusts: maxGusts,
+        water: waterCumulatives
       }
     },
     drawTemperatureChart(events) {
@@ -424,19 +449,34 @@ export default {
       this.windCollection = {
         labels: labels,
         datasets: [
-          // {
-          //   label: "Gust (Km/h)",
-          //   backgroundColor: 'rgba(255, 0, 0, 0.5)',
-          //   data: windData.gusts
-          // },
+          {
+            label: "Gust (Km/h)",
+            // borderColor: 'rgba(255, 0, 0, 1)',
+            data: windData.gusts,
+            backgroundColor: 'rgba(0, 50, 100, 0.5)'
+            // borderWidth: 2
+          },
           {
             label: "Average (Km/h)",
-            backgroundColor: 'rgba(0, 250, 0, 0.55)',
-            data: windData.speeds
+            // borderColor: 'rgba(0, 100, 0, 1)',
+            data: windData.speeds,
+            backgroundColor: 'rgba(0, 100, 50, 0.5)'
           }
         ]
       }
-
+    },
+    drawWaterChart(waterData, events) {
+      const labels = this.generateTimeLabelsFromEvents(events);
+      this.waterCollection = {
+        labels: labels,
+        datasets: [
+          {
+            label: "Rainfall (mm)",
+            backgroundColor: 'rgba(0, 50, 100, 0.5)',
+            data: waterData
+          }
+        ]
+      }
     },
     fillData () {
       this.temperatureCollection = {
