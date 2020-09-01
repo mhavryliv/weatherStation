@@ -1,6 +1,18 @@
 const WebSocket = require('ws');
+var https = require('https');
+var express = require('express');
+var wss = express();
 
-const wss = new WebSocket.Server({ port: 8123 });
+
+var privateKey  = fs.readFileSync(' /etc/letsencrypt/live/realtimeweather-molly1.flyingaspidistra.net/privkey.pem', 'utf8');
+var certificate = fs.readFileSync(' /etc/letsencrypt/live/realtimeweather-molly1.flyingaspidistra.net/cert.pem', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
+
+httpsServer = https.createServer(credentials, wss);
+httpsServer.listen(443);
+
+
+// const wss = new WebSocket.Server({ port: 8123 });
 
 let weatherStation;
 

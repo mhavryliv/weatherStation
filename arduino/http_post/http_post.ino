@@ -5,7 +5,7 @@
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <ESPmDNS.h>
+//#include <ESPmDNS.h>
 //#include <WiFiUdp.h>
 //#include <ArduinoOTA.h>
 
@@ -71,7 +71,7 @@ const unsigned long bmeReadDelay = 59000;
 // Websocket
 const char* websockets_server_host = "realtimeweather-molly1.flyingaspidistra.net"; //Enter server adress
 const uint16_t websockets_server_port = 8123; // Enter server port
-StaticJsonDocument<800> wsdoc;  // the websocket json document, don't rebuilt it all the time
+StaticJsonDocument<600> wsdoc;  // the websocket json document, don't rebuilt it all the time
 using namespace websockets;
 WebsocketsClient client;
 
@@ -309,11 +309,14 @@ void setupWifi() {
     return;
   }
   WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
   WiFi.begin(ssid, password);
   Serial.println("Connecting to wifi: " + String(ssid));
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+    delay(1000);
+    Serial.print(". ");
+    Serial.print("(" + String(WiFi.status()) + ")");
+    WiFi.begin(ssid, password);
   }
   Serial.println("");
   Serial.print("Connected to WiFi network with IP Address: ");
@@ -436,5 +439,6 @@ void sendHttpReq() {
   }
   else {
     Serial.println("WiFi Disconnected");
+    setupWifi();
   }
 }
