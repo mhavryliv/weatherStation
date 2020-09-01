@@ -5,8 +5,8 @@ var wss = express();
 var fs = require('fs');
 
 
-var privateKey  = fs.readFileSync(' /etc/letsencrypt/live/realtimeweather-molly1.flyingaspidistra.net/privkey.pem', 'utf8');
-var certificate = fs.readFileSync(' /etc/letsencrypt/live/realtimeweather-molly1.flyingaspidistra.net/cert.pem', 'utf8');
+var privateKey  = fs.readFileSync('/home/ubuntu/sslCerts/privkey.pem', 'utf8');
+var certificate = fs.readFileSync('/home/ubuntu/sslCerts/cert.pem', 'utf8');
 var credentials = {key: privateKey, cert: certificate};
 
 httpsServer = https.createServer(credentials, wss);
