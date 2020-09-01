@@ -1,5 +1,3 @@
-// Particles, by Daniel Shiffman.
-
 ParticleSystem ps;
 PImage sprite;  
 import websockets.*;
@@ -21,7 +19,7 @@ ArrayList<ParticleSystem> hotspotSystems;
 long numLoops = 0;
 
 void setup() {  
-  size(500, 500, P2D);
+  size(1000, 1000, P2D);
   pixelDensity(displayDensity());
 
   destination = createImage(width, height, ARGB);

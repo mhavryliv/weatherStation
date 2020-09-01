@@ -18,6 +18,7 @@
           <h2>Temperature: {{currentWeather.temperature}} °C</h2>
           <h2>Humidity: {{currentWeather.humidity}}%</h2>
           <h2>Wind speed: {{liveWindSpeed}} km/h</h2>
+          <h2>Wind direction: {{liveWindDir}} </h2>
         </div>
         <div id="container"></div>
 
@@ -104,13 +105,14 @@ export default {
     return {
       hasUpdatedGauge: false,
       liveWindSpeed: 0,
+      liveWindDir: "",
       currentWeather: {loading: false},
       historicData: {
         loading: false,
         count: 0,
         events: []
       },
-      numHoursForHistory: 12,
+      numHoursForHistory: 6,
       temperatureCollection: {},
       windCollection: {},
       waterCollection: {},
@@ -356,6 +358,9 @@ export default {
           closestTimeDiff = timeDiff;
           closestIndex = i;
         }
+      }
+      if(closestIndex === undefined) {
+        closestIndex = startPos;
       }
       return closestIndex;
     },
@@ -686,14 +691,14 @@ export default {
     },
     windNumberFromDir(dir) {
       const data = {
-        N: 0,
-        NW: 45,
-        W: 90,
-        SW: 135,
-        S: 180,
-        SE: 225,
-        E: 270,
-        NE: 315
+        S: 0,
+        SE: 45,
+        E: 90,
+        NE: 135,
+        N: 180,
+        NW: 225,
+        W: 270,
+        SW: 315
       }
 
       return data[dir];
@@ -726,6 +731,7 @@ export default {
         windDir = self.windNumberFromDir(windDir);
         const windSpeed = data.wspeed;
         self.liveWindSpeed = self.round(windSpeed, 2);
+        self.liveWindDir = data.wdir;
         if(theGauge) {
           theGauge.data([windDir, windSpeed])
         }
