@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 var https = require('https');
 var express = require('express');
-var wss = express();
+// var wss = express();
 var fs = require('fs');
 
 

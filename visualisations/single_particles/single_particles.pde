@@ -54,7 +54,7 @@ void setup() {
   // but not z-sorted.
   hint(DISABLE_DEPTH_MASK);
   
-  wsc = new WebsocketClient(this, "wss://realtimeweather-molly1.flyingaspidistra.net:8080");
+  wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
 } 
 
 void draw () {
