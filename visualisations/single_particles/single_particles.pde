@@ -21,7 +21,7 @@ ArrayList<ParticleSystem> hotspotSystems;
 long numLoops = 0;
 
 void setup() {  
-  size(1000, 700, P2D);
+  size(500, 500, P2D);
   pixelDensity(displayDensity());
 
   destination = createImage(width, height, ARGB);
@@ -54,7 +54,7 @@ void setup() {
   // but not z-sorted.
   hint(DISABLE_DEPTH_MASK);
   
-  wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
+  wsc = new WebsocketClient(this, "wss://realtimeweather-molly1.flyingaspidistra.net:8080");
 } 
 
 void draw () {

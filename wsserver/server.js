@@ -9,11 +9,11 @@ var privateKey  = fs.readFileSync('/home/ubuntu/sslCerts/privkey.pem', 'utf8');
 var certificate = fs.readFileSync('/home/ubuntu/sslCerts/cert.pem', 'utf8');
 var credentials = {key: privateKey, cert: certificate};
 
-httpsServer = https.createServer(credentials, wss);
-httpsServer.listen(443);
+// httpsServer = https.createServer(credentials, wss);
+// httpsServer.listen(443);
 
 
-// const wss = new WebSocket.Server({ port: 8123 });
+const wss = new WebSocket.Server({ port: 8123 });
 
 let weatherStation;
 
