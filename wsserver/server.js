@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 var https = require('https');
 var express = require('express');
 var wss = express();
+var fs = require('fs');
 
 
 var privateKey  = fs.readFileSync(' /etc/letsencrypt/live/realtimeweather-molly1.flyingaspidistra.net/privkey.pem', 'utf8');
