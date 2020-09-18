@@ -34,14 +34,14 @@
             <th>Humidity (%)</th>
             <th>Wind Avg (Max)</th>
             <th>Wind direction</th>
-            <th>Rainfall (mm)</th>
+            <!-- <th>Rainfall (mm)</th> -->
           </thead>
           <tr v-for="(data, i) in tableData" :key="i">
             <td>{{data.temperature}}</td>
             <td>{{data.humidity}}</td>
             <td>{{data.wind_avg}} ({{data.wind_max}})</td>
             <td>{{data.main_wind_dir}}</td>
-            <td>{{data.water_mm}}</td>
+            <!-- <td>{{data.water_mm}}</td> -->
           </tr>
         </table>
       </div>
@@ -56,15 +56,13 @@
           <div style="margin-top:30px;">Wind Speed</div>
           <line-chart :chart-data="windCollection" :options="windChartOptions" />
 
-          <div>Water (mm)</div>
-          <line-chart :chart-data="waterCollection" :options="chartOptions" />
+          <!-- <div>Water (mm)</div>
+          <line-chart :chart-data="waterCollection" :options="chartOptions" /> -->
 
         </div>
       </div>
 
     <hr>
-
-    <button @click="getCurrentData">Refresh</button>
 
   </div>
 </template>
@@ -112,7 +110,7 @@ export default {
         count: 0,
         events: []
       },
-      numHoursForHistory: 6,
+      numHoursForHistory: 24,
       temperatureCollection: {},
       windCollection: {},
       waterCollection: {},

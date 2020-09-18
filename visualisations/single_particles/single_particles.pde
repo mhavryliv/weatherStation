@@ -19,7 +19,7 @@ ArrayList<ParticleSystem> hotspotSystems;
 long numLoops = 0;
 
 void setup() {  
-  size(1000, 1000, P2D);
+  size(1000, 800, P2D);
   pixelDensity(displayDensity());
 
   destination = createImage(width, height, ARGB);
