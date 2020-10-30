@@ -34,14 +34,14 @@
             <th>Humidity (%)</th>
             <th>Wind Avg (Max)</th>
             <th>Wind direction</th>
-            <!-- <th>Rainfall (mm)</th> -->
+            <th>Rainfall (mm)</th>
           </thead>
           <tr v-for="(data, i) in tableData" :key="i">
             <td>{{data.temperature}}</td>
             <td>{{data.humidity}}</td>
             <td>{{data.wind_avg}} ({{data.wind_max}})</td>
             <td>{{data.main_wind_dir}}</td>
-            <!-- <td>{{data.water_mm}}</td> -->
+            <td>{{data.water_mm}}</td>
           </tr>
         </table>
       </div>
@@ -56,8 +56,8 @@
           <div style="margin-top:30px;">Wind Speed</div>
           <line-chart :chart-data="windCollection" :options="windChartOptions" />
 
-          <!-- <div>Water (mm)</div>
-          <line-chart :chart-data="waterCollection" :options="chartOptions" /> -->
+          <div>Water (mm)</div>
+          <line-chart :chart-data="waterCollection" :options="chartOptions" />
 
         </div>
       </div>
@@ -145,7 +145,7 @@ export default {
       return opt;
     },
     tableData() {
-      const limit = 10;
+      const limit = 30;
       let data = [];
       const toDo = Math.min(limit, this.historicData.events.length);
       const startPoint = this.historicData.events.length - toDo;
@@ -725,6 +725,8 @@ export default {
       }
       ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
+        console.log("Websocket")
+        console.log(data)
         let windDir = data.wdir;
         windDir = self.windNumberFromDir(windDir);
         const windSpeed = data.wspeed;

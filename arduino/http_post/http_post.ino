@@ -30,7 +30,7 @@ const bool isDoingWifi = true;
 // Wifi sending interval (msec)
 const int WIFI_INTERVAL = 60000;
 int dataSetCounter = 0;
-const int windSpeedInputPin = 16;
+const int windSpeedInputPin = 18;
 const int windDirInPin = A0;
 
 const int WIND_DEBOUNCE_MSEC = 20;
@@ -48,7 +48,7 @@ const float windDirOutputVals[WIND_DIR_LEN] = {0.23, 0.53, 0.94, 0.84, 0.67, 0.3
 const String windDirNames[WIND_DIR_LEN] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
 
 // Water
-const int waterInputPin = 17;
+const int waterInputPin = 19;
 const int WATER_DEBOUNCE_MSEC = 80;
 volatile unsigned long waterClickCount = 0;
 volatile unsigned long lastWaterClick = 0;
@@ -132,13 +132,15 @@ void setup() {
   lastBMERead = 0;
   hadWindClick = false;
   hadWaterClick = false;
+  lastWindClick = millis();
 }
 
 void loop() {
   if (isDoingWifi) {
 //    ArduinoOTA.handle();
   }
-  frameStartTime = millis();
+  frameStartTime = millis();  
+
   // Do calculations on collected data
   calculateWindSpeed();
   calculateWindDir();
@@ -291,16 +293,18 @@ void handleWaterClick() {
   if (diff < WATER_DEBOUNCE_MSEC) {
     return;
   }
-//  Serial.println("Water!!!");
+  
   lastWaterClick = thisTime;
   waterClickCount++;
+  Serial.print("Water count ");
+  Serial.println(waterClickCount);
   hadWaterClick = true;
 }
 
 void setupInputPins() {
   pinMode(windSpeedInputPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(windSpeedInputPin), handleWindClick, FALLING);
-  pinMode(waterInputPin, INPUT_PULLUP);
+  pinMode(waterInputPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(waterInputPin), handleWaterClick, FALLING);
 }
 
@@ -308,55 +312,33 @@ void setupWifi() {
   if (!isDoingWifi) {
     return;
   }
+
+//WiFi.begin(ssid, password); 
+//delay(200);
+//WiFi.disconnect(); 
+//delay(200);
+//WiFi.begin(ssid, password); 
+//while (WiFi.status() != WL_CONNECTED)  {
+//  delay(100);  delay(50); Serial.print(".");
+//}
+
+
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   WiFi.begin(ssid, password);
   Serial.println("Connecting to wifi: " + String(ssid));
   while (WiFi.status() != WL_CONNECTED) {
+    delay(2000);
+    WiFi.disconnect();
     delay(1000);
     Serial.print(". ");
-    Serial.print("(" + String(WiFi.status()) + ")");
-    WiFi.begin(ssid, password);
+    Serial.println("(" + String(WiFi.status()) + ")");
+    WiFi.begin();
+    delay(2000);
   }
   Serial.println("");
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
-
-//    Serial.println("Setting up OTA");
-//    // Setup the OTA programming
-//     ArduinoOTA.setPort(3232);
-//     ArduinoOTA.setHostname("weather_station_arduino_1");
-//     ArduinoOTA.setPassword("unisux");
-//  
-//    ArduinoOTA
-//      .onStart([]() {
-//        String type;
-//        if (ArduinoOTA.getCommand() == U_FLASH)
-//          type = "sketch";
-//        else // U_SPIFFS
-//          type = "filesystem";
-//  
-//        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-//        Serial.println("Start updating " + type);
-//      })
-//      .onEnd([]() {
-//        Serial.println("\nEnd");
-//      })
-//      .onProgress([](unsigned int progress, unsigned int total) {
-//        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-//      })
-//      .onError([](ota_error_t error) {
-//        Serial.printf("Error[%u]: ", error);
-//        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-//        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-//        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-//        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-//        else if (error == OTA_END_ERROR) Serial.println("End Failed");
-//      });
-//  
-//    ArduinoOTA.begin();
-//  
-//    Serial.println("OTA ready on port 3232");
 }
 
 // Creates a JSON object out of required data, and returns as serialised string.
@@ -392,6 +374,9 @@ String createJsonForWs(bool isWindClick, String windDir, bool isWaterClick, bool
   wsdoc["waterclick"] = isWaterClick;
   const double freq = 1.0 / (windSpeedAvg.getCurAvg() / 1000.0);
   float windspeed = (float)freq * 2.4f;
+  if ((millis() - lastWindClick) > WIND_FRAME_SIZE) {
+    windspeed = 0;
+  }
   wsdoc["wspeed"] = windspeed;
   wsdoc["time"] = millis();
   if (includeAtmospheric)  {
