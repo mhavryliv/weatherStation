@@ -145,7 +145,7 @@ export default {
       return opt;
     },
     tableData() {
-      const limit = 30;
+      const limit = 60;
       let data = [];
       const toDo = Math.min(limit, this.historicData.events.length);
       const startPoint = this.historicData.events.length - toDo;
@@ -230,9 +230,9 @@ export default {
       const timerange = this.historicDataTimeRange;
       const start = new Date(timerange.start);
       const end = new Date(timerange.end);
-      console.log("Historical range:");
-      console.log(start);
-      console.log(end);
+      // console.log("Historical range:");
+      // console.log(start);
+      // console.log(end);
       this.calculateAndChartData();
     },
     async getEventHistory(numSecBack) {
@@ -253,14 +253,14 @@ export default {
       const postData = {
         getCurrent: true
       }
-      console.log("Making post request for most recent event...");
+      // console.log("Making post request for most recent event...");
       const data = await this.doPostCall(postData);
       if(!data) {
         return console.log("Couldn't get most recent event");
       }
       const event = data.events[0];
       this.currentWeather = event;
-      console.log("Got something for: " + new Date(event.time));
+      // console.log("Got something for: " + new Date(event.time));
     },
     async doPostCall(postData) {
       try {
@@ -725,8 +725,10 @@ export default {
       }
       ws.onmessage = (msg) => {
         const data = JSON.parse(msg.data);
-        console.log("Websocket")
-        console.log(data)
+        console.log(data);
+        if(data.waterclick) {
+          console.log("WATER!!!")
+        }
         let windDir = data.wdir;
         windDir = self.windNumberFromDir(windDir);
         const windSpeed = data.wspeed;

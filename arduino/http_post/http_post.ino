@@ -32,6 +32,7 @@ const int WIFI_INTERVAL = 60000;
 int dataSetCounter = 0;
 const int windSpeedInputPin = 18;
 const int windDirInPin = A0;
+const int waterInPin = A3;
 
 const int WIND_DEBOUNCE_MSEC = 20;
 const int WIND_FRAME_SIZE = 2000; // set this to 3 seconds to allow for very slow wind ( < 1kmh )
@@ -49,10 +50,11 @@ const String windDirNames[WIND_DIR_LEN] = {"N", "NE", "E", "SE", "S", "SW", "W",
 
 // Water
 const int waterInputPin = 19;
-const int WATER_DEBOUNCE_MSEC = 80;
+const int WATER_DEBOUNCE_MSEC = 200;
 volatile unsigned long waterClickCount = 0;
 volatile unsigned long lastWaterClick = 0;
 volatile bool hadWaterClick;
+volatile bool waterState = false;
 
 // Data to send over HTTP
 const int NUM_DATA_POINTS = WIFI_INTERVAL / WIND_FRAME_SIZE;
@@ -167,6 +169,10 @@ void loop() {
   const unsigned long targetTime = frameStartTime + WIND_FRAME_SIZE;
   if (client.available()) {
     while (millis() < targetTime) {
+      const int aval = analogRead(waterInPin);
+      if(aval == 0) {
+        handleWaterClick();
+      }
       // If the flag is true, send a websocket msg
       if (hadWindClick || hadWaterClick) {
         // Update the wind direction
@@ -288,16 +294,26 @@ void handleWindClick() {
 }
 
 void handleWaterClick() {
+  const int aval = analogRead(waterInPin);
+  if(aval != 0) {
+    return;
+  }
+ 
   const unsigned long thisTime = millis();
   const unsigned long diff = thisTime - lastWaterClick;
-  if (diff < WATER_DEBOUNCE_MSEC) {
+  lastWaterClick = thisTime;
+  if(diff < WATER_DEBOUNCE_MSEC) {
     return;
   }
   
-  lastWaterClick = thisTime;
   waterClickCount++;
-  Serial.print("Water count ");
-  Serial.println(waterClickCount);
+  waterState = !waterState;
+//  Serial.print("Water change to ");
+//  Serial.print(waterState ? "high" : "low");
+//  Serial.print(" at time ");  
+//  Serial.println(thisTime);
+//  Serial.print("Water click count: ");
+//  Serial.println(waterClickCount);
   hadWaterClick = true;
 }
 
@@ -306,6 +322,7 @@ void setupInputPins() {
   attachInterrupt(digitalPinToInterrupt(windSpeedInputPin), handleWindClick, FALLING);
   pinMode(waterInputPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(waterInputPin), handleWaterClick, FALLING);
+  pinMode(waterInPin, INPUT);
 }
 
 void setupWifi() {
