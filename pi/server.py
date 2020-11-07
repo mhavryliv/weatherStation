@@ -4,36 +4,47 @@ import aiohttp
 import asyncio
 
 # Prepare the http post sending async routine
-async def main(data):
+async def httpSend(session, data):
+  await session.post('http://192.168.86.135:9876/add', json=data)
+
+async def sendWs(ws, data):
+  await ws.send_str(json.dumps(data))
+
+async def main():
+  
   async with aiohttp.ClientSession() as session:
-    async with session.post('http://192.168.86.135:9876/add', json=data) as resp:
-        print(resp.status)
-        print(await resp.text())
+    async with session.ws_connect('ws://realtimeweather-molly1.flyingaspidistra.net:8123') as ws:
+      print("Opened websocket")
+      # Open the port
+      ser = serial.Serial('/dev/ttyUSB0', 115200)
 
-httploop = asyncio.get_event_loop()
+      # Read loop
+      while True:
+        # Try to catch keyboard interrupts
+        try:
+          line = ser.readline()
+          # print(line)
+          # Try to catch invalid json
+          try:
+            data = json.loads(line)
+            # print(data)
+            try:
+              if "info" in data:
+                if(data["info"] == "Weather station data"):
+                  httptask = asyncio.ensure_future(httpSend(session, data))
+                  await httptask
+              else:
+                if data.get('isWS') is not None:
+                  task = asyncio.ensure_future(sendWs(ws, data))
+                  await task
+            except Exception as e:
+              print("Exception sending data: " + str(e))
+          except Exception as e:
+            print("Exception loading JSON data: " + str(e))
+            pass
 
-# Open the port
-ser = serial.Serial('/dev/ttyUSB0', 115200)
+        except:
+          print("Keyboard interrupt - exit")
+          break
 
-# Read loop
-while True:
-  # Try to catch keyboard interrupts
-  try:
-    line = ser.readline()
-    # print(line)
-    # Try to catch invalid json
-    try:
-      data = json.loads(line)
-      print(data)
-      if "info" in data:
-        if(data["info"] == "Weather station data"):
-          httploop.run_until_complete(main(data))
-
-    except:
-      # print("not valid json")
-      pass
-
-  except:
-    print("Keyboard interrupt")
-    break
-
+asyncio.run(main())
