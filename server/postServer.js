@@ -8,15 +8,15 @@ app.use(bodyParser.json())
 app.post('/add', (req, res) => {
   const data = req.body;
   const timestamp = Date.now();
-  const samplingInterval = data.interval;
-  const speedArr = data.wind_speed;
-  const gustArr = data.max_gust;
-  const dirArr = data.wind_dir;
-  const waterMm = data.water_mm;
-  const windClickTimes = data.wind_click_times;
-  const temperatureArr = data.temperature;
-  const humidityArr = data.humidity;
-  const pressureArr = data.pressure;
+  // const samplingInterval = data.interval;
+  // const speedArr = data.wind_speed;
+  // const gustArr = data.max_gust;
+  // const dirArr = data.wind_dir;
+  // const waterMm = data.water_mm;
+  // const windClickTimes = data.wind_click_times;
+  // const temperatureArr = data.temperature;
+  // const humidityArr = data.humidity;
+  // const pressureArr = data.pressure;
 
   console.log(new Date());
   console.log(data);
@@ -31,6 +31,10 @@ app.post('/add', (req, res) => {
   // console.log("Humidity " + humidityArr);
   // console.log("Pressure " + pressureArr);
   res.send("ok");
+})
+
+app.get('/feeb', (req, res) => {
+  res.send("woo")
 })
 
 app.listen(9876, () => {
