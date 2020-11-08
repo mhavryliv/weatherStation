@@ -5,7 +5,8 @@ import asyncio
 
 # Prepare the http post sending async routine
 async def httpSend(session, data):
-  await session.post('http://192.168.86.135:9876/add', json=data)
+  # await session.post('http://192.168.86.135:9876/add', json=data)
+  await session.post('https://weatherreporting.flyingaspidistra.net/add', json=data)
 
 async def sendWs(ws, data):
   await ws.send_str(json.dumps(data))
