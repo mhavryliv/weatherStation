@@ -26,19 +26,23 @@
 
       <div>{{currentDate}}</div>
       <div style="font-style:italic;margin:10px 0">
-        Minutely readings for past 10 minutes</div>
+        Minutely readings for past {{numTableItemsToShow}} minutes</div>
       <div class="weather_table">
         <table>
           <thead>
-            <th>Temp. (C)</th>
-            <th>Humidity (%)</th>
+            <th>Time</th>
+            <th v-if="$mq==='sm'">Temp. (C)</th>
+            <th v-else>Temperature (C)</th>
+            <th v-if="$mq==='sm'">Hum. %</th>
+            <th v-else>Humidity %</th>
             <th>Wind Avg (Max)</th>
             <th>Wind direction</th>
             <th>Rainfall (mm)</th>
           </thead>
           <tr v-for="(data, i) in tableData" :key="i">
+            <td>{{data.displayTime}}</td>
             <td>{{data.temperature}}</td>
-            <td>{{data.humidity}}</td>
+            <td>{{Math.floor(data.humidity)}}</td>
             <td>{{data.wind_avg}} ({{data.wind_max}})</td>
             <td>{{data.main_wind_dir}}</td>
             <td>{{data.water_mm}}</td>
@@ -101,6 +105,7 @@ export default {
   },
   data() {
     return {
+      numTableItemsToShow: 30,
       hasUpdatedGauge: false,
       liveWindSpeed: 0,
       liveWindDir: "",
@@ -145,7 +150,7 @@ export default {
       return opt;
     },
     tableData() {
-      const limit = 60;
+      const limit = this.numTableItemsToShow;
       let data = [];
       const toDo = Math.min(limit, this.historicData.events.length);
       const startPoint = this.historicData.events.length - toDo;
@@ -153,10 +158,13 @@ export default {
       const dateOpt =
       {
       hour: 'numeric', minute: 'numeric'};
+
       for(var i = startPoint; i < endPoint; ++i) {
         let event = JSON.parse(JSON.stringify(this.historicData.events[i]));
+        const eventTime = new Date(event.time);
         
-        event.time = new Date(event.time).toLocaleDateString('en-AU', dateOpt);
+        event.time = new Date(eventTime).toLocaleDateString('en-AU', dateOpt);
+        event.displayTime = new Date(eventTime).toLocaleTimeString('en-AU',{hour12: false, hour: '2-digit', minute: '2-digit' })
         const windavg = this.averageOfArr(event.wind_speed);
         const windmax = this.maxOfArr(event.wind_speed);
         event.wind_avg = this.round(windavg, 1);
