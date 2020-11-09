@@ -94,7 +94,7 @@ void setup() {
 
   pinMode(windSpeedInputPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(windSpeedInputPin), handleWindClick, FALLING);
-  pinMode(waterInputPin, INPUT_PULLUP);
+  pinMode(waterInputPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(waterInputPin), handleWaterClick, FALLING);;
 
 
