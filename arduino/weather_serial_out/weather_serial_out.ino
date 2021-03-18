@@ -21,6 +21,7 @@ Adafruit_BME280 bme; // I2C
 const int SERIAL_INTERVAL = 60000;
 int dataSetCounter = 0;
 const int windSpeedInputPin = 18;
+//const int windSpeedInputPin = 35;
 const int windDirInPin = A0;
 const int waterInPin = A3;
 
@@ -30,7 +31,7 @@ volatile unsigned long lastWindClick;
 volatile unsigned long shortestWindClickInterval;
 volatile MovAvg windSpeedAvg(5);
 // Variables for sending over WS
-volatile bool hadWindClick;
+volatile bool hadWindClick = false;
 String lastWindDir = "N";
 
 // The normalised values output by the wind direction vane, clockwise from North
@@ -43,8 +44,7 @@ const int waterInputPin = 19;
 const int WATER_DEBOUNCE_MSEC = 200;
 volatile unsigned long waterClickCount = 0;
 volatile unsigned long lastWaterClick = 0;
-volatile bool hadWaterClick;
-volatile bool waterState = false;
+volatile bool hadWaterClick = false;
 
 // Data to send over Serial
 const int NUM_DATA_POINTS = SERIAL_INTERVAL / WIND_FRAME_SIZE;
@@ -92,7 +92,7 @@ void setup() {
                   Adafruit_BME280::SAMPLING_X1, // humidity
                   Adafruit_BME280::FILTER_OFF   );
 
-  pinMode(windSpeedInputPin, INPUT_PULLUP);
+  pinMode(windSpeedInputPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(windSpeedInputPin), handleWindClick, FALLING);
   pinMode(waterInputPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(waterInputPin), handleWaterClick, FALLING);;
@@ -120,13 +120,6 @@ void loop() {
   calculateWindDir();
   getTemperatureData();
 
-
-//  delay(1000);
-//  Serial.println("loop");
-//  int val = analogRead(36);
-//  Serial.println(val);
-
-
   // Reset data set counter if it about to rollover, and send wifi data
   // Also clear the water counter here - don't need to update it every wind frame
   if (dataSetCounter == (NUM_DATA_POINTS - 1)) {
@@ -145,16 +138,20 @@ void loop() {
   // Instead of sleeping, let's loop so we can check for wind clicks
   const unsigned long targetTime = frameStartTime + WIND_FRAME_SIZE;
   while (millis() < targetTime) {
-//    const int aval = analogRead(waterInPin);
-//    if(aval == 0) {
-//      handleWaterClick();
-//    }
     // If the flag is true, send a websocket msg
     if (hadWindClick || hadWaterClick) {
       // Update the wind direction
       calculateWindDir();
       String msg = createJsonForWs(hadWindClick, lastWindDir, hadWaterClick, false);
       Serial.println(msg);
+//       if(hadWaterClick) {
+//        Serial.println("Water!");
+//        Serial.println(msg);
+//       }
+//       if(hadWindClick) {
+//        Serial.println("Wind!");
+//        Serial.println(msg);
+//       }
     }
     // reset the flags
     if(hadWindClick) {
@@ -163,7 +160,7 @@ void loop() {
     if(hadWaterClick) {
       hadWaterClick = false;
     }
-    delay(1);
+    delay(10);
   }
   String msg = createJsonForWs(false, lastWindDir, false, true);
   Serial.println(msg);
@@ -232,10 +229,15 @@ void calculateWindDir() {
 
 // Interrupt handling
 void handleWindClick() {
+//  Serial.println("Wind click");
+//  return;
+//  Serial.println(millis());
+  
   // If less than 20 msec has passed since last click, don't count it
   const unsigned long thisTime = millis();
   const unsigned long diff = thisTime - lastWindClick;
   if (diff < WIND_DEBOUNCE_MSEC) {
+//    Serial.println("Ignoring...");
     return;
   }
   lastWindClick = thisTime;
@@ -253,6 +255,10 @@ void handleWindClick() {
 }
 
 void handleWaterClick() {
+//  Serial.print("Water click at ");
+//  Serial.println(millis());
+//    Serial.println("WATER CLICK");
+//    return;
 //  const int aval = analogRead(waterInPin);
 //  if(aval != 0) {
 //    return;
@@ -266,7 +272,6 @@ void handleWaterClick() {
   }
   
   waterClickCount++;
-  waterState = !waterState;
   hadWaterClick = true;
 }
 

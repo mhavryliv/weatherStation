@@ -20,6 +20,7 @@ long numLoops = 0;
 
 void setup() {  
   size(1000, 800, P2D);
+  frameRate(30);
   pixelDensity(displayDensity());
 
   destination = createImage(width, height, ARGB);
@@ -212,7 +213,7 @@ void handleWindInput(String windDir) {
 
 void webSocketEvent(String msg){
   JSONObject data = parseJSONObject(msg);
-  println(msg);
+  //println(msg);
   boolean isWaterClick = data.getBoolean("waterclick", false);
   boolean isWindClick = data.getBoolean("windclick", false);
   String windDir = data.getString("wdir");
