@@ -18,7 +18,7 @@ PImage destination;
 long numLoops = 0;
 
 void setup() {  
-  size(1000, 800, P2D);
+  size(800, 480, P2D);
   frameRate(30);
   pixelDensity(displayDensity());
 
