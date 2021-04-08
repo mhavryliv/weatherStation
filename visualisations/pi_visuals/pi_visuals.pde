@@ -18,9 +18,11 @@ PImage destination;
 long numLoops = 0;
 
 void setup() {  
-  size(800, 480, P2D);
+  //size(800, 480, P2D);
+  fullScreen();
   frameRate(30);
-  pixelDensity(displayDensity());
+//  pixelDensity(displayDensity());
+//  smooth(2);
 
   destination = createImage(width, height, ARGB);
   
