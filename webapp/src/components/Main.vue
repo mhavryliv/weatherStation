@@ -52,7 +52,8 @@
     </div>
 
       <div class="historic_data_wrapper">
-        <h3>Past {{numHoursForHistory}} hours</h3>
+        <!-- <h3>Past {{numHoursForHistory}} hours</h3> -->
+        <h3>Past <input v-model.number="numHoursForHistory" type="number"/> hours</h3>
         <div class="small">
           <div>Temperature (Celcius)</div>
           <line-chart :chart-data="temperatureCollection" :options="chartOptions" />
@@ -101,11 +102,16 @@ export default {
         }, 100);
         
       }
+    },
+    numHoursForHistory(newVal) {
+      if(newVal != 0) {
+        this.reloadHistoricData(true)
+      }
     }
   },
   data() {
     return {
-      numTableItemsToShow: 30,
+      numTableItemsToShow: 10,
       hasUpdatedGauge: false,
       liveWindSpeed: 0,
       liveWindDir: "",

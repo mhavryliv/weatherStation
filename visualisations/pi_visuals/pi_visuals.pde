@@ -7,6 +7,12 @@ float windClickCounter = 0;
 float windXComponent = 0.f;
 float windYComponent = 0.f;
 
+float lastTemp = 20.0f;
+float lastHum = 50.0f;
+String lastWindDir = "(none)";
+float lastWindSpeed = 0.f;
+
+
 PImage destination;
 
 long numLoops = 0;
@@ -49,10 +55,19 @@ void draw () {
 
   image(destination, 0, 0);
   
-  
   //fill(255);
   textSize(12);
   text("Frame rate: " + int(frameRate), 10, 20); 
+  
+  String tempStr = "Temperature: " + nf(lastTemp, 0, 1);
+  String humStr = "Humidity: " + round(lastHum) + "%";
+  String windStr = "Wind: " + nf(lastWindSpeed, 0, 1) + " km/h (" + lastWindDir + ")";
+  
+  textSize(16);
+  text(tempStr, 10, 50);
+  text(humStr, 10, 80);
+  text(windStr, 10, 110);
+  
 }
 
 
@@ -114,9 +129,14 @@ void handleWindInput(String windDir) {
 }
 
 void webSocketEvent(String msg){
+  //return;
+  JSONObject data = parseJSONObject(msg);
+  //println(msg);
+  lastTemp = data.getFloat("temp", 20.f);
+  lastHum = data.getFloat("humidity", 50.0f);
+  lastWindDir = data.getString("wdir", "(n/a)");
+  lastWindSpeed = data.getFloat("wspeed", 0.f);
   return;
-  //JSONObject data = parseJSONObject(msg);
-  ////println(msg);
   //boolean isWaterClick = data.getBoolean("waterclick", false);
   //boolean isWindClick = data.getBoolean("windclick", false);
   //String windDir = data.getString("wdir");
