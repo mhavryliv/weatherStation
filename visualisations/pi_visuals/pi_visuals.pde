@@ -1,4 +1,7 @@
 import websockets.*;
+import VLCJVideo.*;
+
+VLCJVideo video;
 
 WebsocketClient wsc;
 
@@ -19,7 +22,8 @@ long numLoops = 0;
 
 void setup() {  
   //size(800, 480, P2D);
-  fullScreen();
+  //fullScreen();
+  size(800, 480);
   frameRate(30);
 //  pixelDensity(displayDensity());
 //  smooth(2);
@@ -32,6 +36,9 @@ void setup() {
   hint(DISABLE_DEPTH_MASK);
   
   wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
+  
+  video = new VLCJVideo(this);
+  video.openAndPlay("http://babypi.local/hls/index.m3u8");
 } 
 
 void draw () {
@@ -55,9 +62,13 @@ void draw () {
   
   PVector windStrength = new PVector(windStrengthX, windStrengthY);
 
-  image(destination, 0, 0);
+  //image(destination, 0, 0);
   
-  //fill(255);
+  image(video, 0, 0, width, height);
+  
+  fill(255, 0, 0, 1);
+  rect(0, 0, width, height);
+  
   textSize(12);
   text("Frame rate: " + int(frameRate), 10, 20); 
   
