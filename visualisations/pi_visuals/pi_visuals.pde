@@ -42,8 +42,8 @@ void setup() {
 } 
 
 void draw () {
-  background(11*0.35, 60*0.35, 10*0.35);
-  //background(0);
+  //background(11*0.35, 60*0.35, 10*0.35);
+  background(0);
   //image(paperBackground, 0, 0);
   
   // Do the wind calculations
@@ -66,9 +66,11 @@ void draw () {
   
   image(video, 0, 0, width, height);
   
-  fill(255, 0, 0, 1);
+  fill(0, 0, 0, 255 * vidAlpha);
+  noStroke();
   rect(0, 0, width, height);
   
+  fill(255);
   textSize(12);
   text("Frame rate: " + int(frameRate), 10, 20); 
   
@@ -76,11 +78,19 @@ void draw () {
   String humStr = "Humidity: " + round(lastHum) + "%";
   String windStr = "Wind: " + nf(lastWindSpeed, 0, 1) + " km/h (" + lastWindDir + ")";
   
+  
   textSize(16);
   text(tempStr, 10, 50);
   text(humStr, 10, 80);
   text(windStr, 10, 110);
-  
+ 
+}
+
+float vidAlpha = 0;
+
+void mouseClicked() {
+  println("Mouse");
+  vidAlpha += 0.1;
 }
 
 
