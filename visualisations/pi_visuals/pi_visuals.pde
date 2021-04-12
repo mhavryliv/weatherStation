@@ -14,31 +14,29 @@ boolean showButtons = false;
 PImage destination;
 
 long numLoops = 0;
+PFont plainFont;
 
-void setup() {  
+void setup() {
   //size(800, 480, P2D);
   //fullScreen();
   size(800, 480, P3D);
   frameRate(30);
   pixelDensity(displayDensity());
-  //smooth(8);
   
-   String[] fontList = PFont.list();
-  printArray(fontList);
-
+  plainFont = createFont("BrandonGrotesque-Light", 32);
+  textFont(plainFont);
+  
   destination = createImage(width, height, ARGB);
   
   // Writing to the depth buffer is disabled to avoid rendering
   // artifacts due to the fact that the particles are semi-transparent
   // but not z-sorted.
   hint(DISABLE_DEPTH_MASK);
-  
-  textMode(SCREEN);
-  
+  winfo = new WInfo();
   wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
   
   video = new VLCJVideo(this);
-  video.openAndPlay("http://babypi.local/hls/index.m3u8");
+  //video.openAndPlay("http://babypi.local/hls/index.m3u8");
 } 
 
 void draw () {
@@ -82,11 +80,7 @@ void drawAnimatedWeather() {
   stroke(255);
   textSize(20);
   text("Animated weather", 10, 30);
-  
-  lights();
-  translate(50, 50, 0);
-  sphere(15);
-  
+    
 }
 
 void mouseClicked() {
