@@ -1,5 +1,7 @@
+import http.requests.*;
 import VLCJVideo.*;
 import websockets.*;
+
 
 WebsocketClient wsc;
 VLCJVideo video;
@@ -31,8 +33,9 @@ void setup() {
   // Writing to the depth buffer is disabled to avoid rendering
   // artifacts due to the fact that the particles are semi-transparent
   // but not z-sorted.
-  hint(DISABLE_DEPTH_MASK);
+//  hint(DISABLE_DEPTH_MASK);
   winfo = new WInfo();
+  thread("updateHistoricalData");
   wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
   
   video = new VLCJVideo(this);
@@ -80,7 +83,11 @@ void drawAnimatedWeather() {
   stroke(255);
   textSize(20);
   text("Animated weather", 10, 30);
-    
+  
+}
+
+void updateHistoricalData() {
+  winfo.updateHistoricalData();
 }
 
 void mouseClicked() {

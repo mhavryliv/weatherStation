@@ -77,7 +77,18 @@ async function getEventsForLastSeconds(numSecondsBack) {
 }
 
 module.exports.get = async (event, context) => {
-  const data = JSON.parse(event.body);
+  console.log("Got request: ");
+  console.log(event.body);
+  let data;
+  // if there is no body, just return last 24 hours
+  if(event.body === null) {
+    console.log("No body in post request so just setting to return last 24 hours data");
+    data = {"getPastSeconds": 86400}
+  }
+  else {
+    data = JSON.parse(event.body);
+  }
+  
   let response = {
     statusCode: 200,
     headers: { 
