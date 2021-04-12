@@ -18,10 +18,13 @@ long numLoops = 0;
 void setup() {  
   //size(800, 480, P2D);
   //fullScreen();
-  size(800, 480);
+  size(800, 480, P3D);
   frameRate(30);
-//  pixelDensity(displayDensity());
-//  smooth(2);
+  pixelDensity(displayDensity());
+  //smooth(8);
+  
+   String[] fontList = PFont.list();
+  printArray(fontList);
 
   destination = createImage(width, height, ARGB);
   
@@ -29,6 +32,8 @@ void setup() {
   // artifacts due to the fact that the particles are semi-transparent
   // but not z-sorted.
   hint(DISABLE_DEPTH_MASK);
+  
+  textMode(SCREEN);
   
   wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
   
@@ -39,7 +44,7 @@ void setup() {
 void draw () {
   background(0);
   if(UIState == 0) {
-    
+    drawAnimatedWeather();
   }
   else if(UIState == 1) {
     drawVideo(true);
@@ -76,7 +81,12 @@ void drawAnimatedWeather() {
   fill(255);
   stroke(255);
   textSize(20);
-  text("Animated weather", 0, 0);
+  text("Animated weather", 10, 30);
+  
+  lights();
+  translate(50, 50, 0);
+  sphere(15);
+  
 }
 
 void mouseClicked() {
