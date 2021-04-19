@@ -9,6 +9,15 @@ float lastHum = 50.0f;
 String lastWindDir = "(none)";
 float lastWindSpeed = 0.f;
 
+class WDataPoint {
+  float temp = 0.f;
+  float humidity = 0.f;
+  float windMax = 0.f;
+  float windAvg = 0.f;
+  int waterCount = 0;
+  int timeOffset = 0;
+}
+
 class WInfo {
   WInfo() {
   }

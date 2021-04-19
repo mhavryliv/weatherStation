@@ -25,7 +25,7 @@ void setup() {
   frameRate(30);
   pixelDensity(displayDensity());
   
-  plainFont = createFont("BrandonGrotesque-Light", 32);
+  plainFont = createFont("BrandonGrotesque-Light", 64);
   textFont(plainFont);
   
   destination = createImage(width, height, ARGB);
@@ -39,7 +39,7 @@ void setup() {
   wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
   
   video = new VLCJVideo(this);
-  //video.openAndPlay("http://babypi.local/hls/index.m3u8");
+  video.openAndPlay("http://babypi.local/hls/index.m3u8");
 } 
 
 void draw () {
@@ -49,7 +49,7 @@ void draw () {
   }
   else if(UIState == 1) {
     drawVideo(true);
-    drawWeatherInfoText();
+    drawAnimatedWeather();
   }
   else if(UIState == 2) {
     drawVideo(false);
@@ -72,18 +72,29 @@ void drawWeatherInfoText() {
   String windStr = "Wind: " + nf(lastWindSpeed, 0, 1) + " km/h (" + lastWindDir + ")";  
   
   fill(255);
-  textSize(16);
-  text(tempStr, 10, 30);
-  text(humStr, 10, 60);
-  text(windStr, 10, 90);  
+  textAlign(CENTER);
+  textSize(32);
+  text(tempStr, width/2, height/3 - 40);
+  text(humStr, width/2, height/3);
+  text(windStr,width/2, height/3 + 40);
+}
+
+void drawTimeText() {
+  String timeStr = hour() + ":" + minute() + ":" + second();
+  
+  fill(255);
+  textAlign(LEFT);
+  textSize(32);
+  text(timeStr, width - 120, 40);
 }
 
 void drawAnimatedWeather() {
   fill(255);
   stroke(255);
   textSize(20);
-  text("Animated weather", 10, 30);
-  
+  //text("Animated weather", 10, 30);
+  drawWeatherInfoText();
+  drawTimeText();
 }
 
 void updateHistoricalData() {
