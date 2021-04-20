@@ -41,7 +41,7 @@ wss.on('connection', function connection(ws) {
       return;
     }
     // Broadcast message to all clients
-    console.log(data);
+    // console.log(data);
     wss.clients.forEach(function each(client) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(dataStr);

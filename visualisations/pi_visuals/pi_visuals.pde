@@ -18,6 +18,7 @@ PImage destination;
 long numLoops = 0;
 PFont plainFont;
 
+
 void setup() {
   //size(800, 480, P2D);
   //fullScreen();
@@ -54,7 +55,14 @@ void draw () {
   else if(UIState == 2) {
     drawVideo(false);
   }
+  else if(UIState == 3) {
+    drawQuitButton();
+  }
  
+}
+
+void drawQuitButton() {
+  fill(255);
 }
 
 void drawVideo(boolean withOverlay) {
@@ -74,18 +82,18 @@ void drawWeatherInfoText() {
   fill(255);
   textAlign(CENTER);
   textSize(32);
-  text(tempStr, width/2, height/3 - 40);
+  text(tempStr, width/2, height/3 - 60);
   text(humStr, width/2, height/3);
-  text(windStr,width/2, height/3 + 40);
+  text(windStr,width/2, height/3 + 60);
 }
 
 void drawTimeText() {
-  String timeStr = hour() + ":" + minute() + ":" + second();
+  String timeStr = nf(hour(),2) + ":" + nf(minute(),2) + ":" + nf(second(), 2);
   
   fill(255);
   textAlign(LEFT);
   textSize(32);
-  text(timeStr, width - 120, 40);
+  text(timeStr, width - 140, 40);
 }
 
 void drawAnimatedWeather() {
