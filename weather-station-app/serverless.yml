@@ -42,6 +42,8 @@ custom:
 provider:
   name: aws
   runtime: nodejs12.x
+  timeout: 16 # optional, in seconds, default is 6
+
 
 # you can overwrite defaults here
   stage: dev
