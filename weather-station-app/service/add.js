@@ -196,9 +196,14 @@ module.exports.writeDataToDb = writeDataToDb;
 
 async function writeSingleItemToDb(item) {
   try {
+    console.log("Checking database connection")
     await mdb.checkConn();
+    console.log("Getting events collection ref")
     const events = mdb.db().collection(mdb.eventCollection);
+    console.log("About to insert doc");
+    console.log(item);
     const result = await events.insertOne(item);
+    console.log("Done!");
     return Promise.resolve(result.insertedId);
   }
   catch(e) {

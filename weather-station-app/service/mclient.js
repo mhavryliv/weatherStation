@@ -12,6 +12,12 @@ if(IS_OFFLINE) {
 else {
   mongoConnStr = "mongodb+srv://" + mongoUser + ":" + mongoPass
                +  "@cluster0.wyaba.mongodb.net/" + mongoDbName + "?retryWrites=true&w=majority";
+
+
+  mongoConnStr = "mongodb://" + mongoUser + ":" + mongoPass + 
+  "@cluster0-shard-00-00.wyaba.mongodb.net:27017,cluster0-shard-00-01.wyaba.mongodb.net:27017,cluster0-shard-00-02.wyaba.mongodb.net:27017/"
+  + mongoDbName + "?ssl=true&replicaSet=atlas-z7hlz2-shard-0&authSource=admin&retryWrites=true&w=majority";
+                 
 }
 
 console.log("Connecting to: " + mongoConnStr);
