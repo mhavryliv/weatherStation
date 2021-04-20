@@ -76,6 +76,8 @@ async function getEventsForLastSeconds(numSecondsBack) {
   }
 }
 
+module.exports.getEventsForLastSeconds = getEventsForLastSeconds;
+
 module.exports.get = async (event, context) => {
   console.log("Got request: ");
   console.log(event.body);

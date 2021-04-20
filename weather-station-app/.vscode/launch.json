@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "command": "node __tests__/historical.test.js",
+      "name": "Run historical test",
+      "request": "launch",
+      "type": "node-terminal",
+      "timeout": 10000
+    },
+    {
       "command": "npm run local",
       "name": "Run npm local",
       "request": "launch",
