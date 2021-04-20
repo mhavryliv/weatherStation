@@ -210,7 +210,12 @@ module.exports.writeSingleItemToDb = writeSingleItemToDb;
 
 module.exports.add = async (event, context) => {
   const data = JSON.parse(event.body);
+  console.log("Adding data")
+  console.log(data);
+  console.log("Checking is valid");
   const dataCheck = isValidData(data);
+  console.log("Validity check")
+  console.log(dataCheck);
 
   if(!dataCheck.has_all_data) {
     const response = {
@@ -223,12 +228,17 @@ module.exports.add = async (event, context) => {
     return response;
   }
 
+  console.log("Converting to DBItem")
   const dataItem = convertDataToDBItem(data);
+  console.log("Converted")
   
   try {
+    console.log("Writing to DB");
     const insertedId = await writeSingleItemToDb(dataItem);
+    console.log("Written");
   }
   catch(error) {
+    console.log("Failed");
     console.error(error);
     return {
       statusCode: error.statusCode || 501,
@@ -246,5 +256,6 @@ module.exports.add = async (event, context) => {
       'success': true
     })
   };
+  console.log("Exiting with success");
   return response;
 };
