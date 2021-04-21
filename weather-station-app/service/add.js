@@ -1,6 +1,10 @@
 'use strict';
 const uuid = require('uuid');
-const mdb = require('./mclient.js');
+let mdb;
+if(!mdb) {
+  console.log("mdb object not initialised");
+  mdb = require('./mclient.js');
+}
 const middy = require('middy');
 const { cors } = require('middy/middlewares');
 // for testing, expose the mdb
@@ -198,12 +202,11 @@ async function writeSingleItemToDb(item) {
   try {
     console.log("Checking database connection")
     await mdb.checkConn();
-    console.log("Getting events collection ref")
     const events = mdb.db().collection(mdb.eventCollection);
     console.log("About to insert doc");
-    console.log(item);
+    // console.log(item);
     const result = await events.insertOne(item);
-    console.log("Done!");
+    console.log("Done with id " + result.insertedId);
     return Promise.resolve(result.insertedId);
   }
   catch(e) {
@@ -215,12 +218,9 @@ module.exports.writeSingleItemToDb = writeSingleItemToDb;
 
 module.exports.add = async (event, context) => {
   const data = JSON.parse(event.body);
-  console.log("Adding data")
-  console.log(data);
-  console.log("Checking is valid");
+  // console.log("Adding data")
+  // console.log(data);
   const dataCheck = isValidData(data);
-  console.log("Validity check")
-  console.log(dataCheck);
 
   if(!dataCheck.has_all_data) {
     const response = {

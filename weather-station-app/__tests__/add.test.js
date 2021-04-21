@@ -51,10 +51,12 @@ test('Data conversion test new', async (done) => {
   const originalData = goodData.body;
   const item = addHandler.convertDataToDBItem(originalData);
   try {
-    const insertedId = await addHandler.writeSingleItemToDb(item);
-    // Try and retrieve it
-    const lastEvent = await getHandler.getLastEvent();
-    expect(lastEvent._id.str).toBe(insertedId.str);
+    for(var i = 0; i < 10; ++i) {
+      const insertedId = await addHandler.writeSingleItemToDb(JSON.parse(JSON.stringify(item)));
+      // Try and retrieve it
+      const lastEvent = await getHandler.getLastEvent();
+      expect(lastEvent._id.str).toBe(insertedId.str);
+    }
   }
   catch(e) {
     expect(e).toBeNull();

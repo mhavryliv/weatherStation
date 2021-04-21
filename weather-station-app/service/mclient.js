@@ -13,14 +13,13 @@ else {
   mongoConnStr = "mongodb+srv://" + mongoUser + ":" + mongoPass
                +  "@cluster0.wyaba.mongodb.net/" + mongoDbName + "?retryWrites=true&w=majority";
 
-
-  mongoConnStr = "mongodb://" + mongoUser + ":" + mongoPass + 
-  "@cluster0-shard-00-00.wyaba.mongodb.net:27017,cluster0-shard-00-01.wyaba.mongodb.net:27017,cluster0-shard-00-02.wyaba.mongodb.net:27017/"
-  + mongoDbName + "?ssl=true&replicaSet=atlas-z7hlz2-shard-0&authSource=admin&retryWrites=true&w=majority";
+  // mongoConnStr = "mongodb://" + mongoUser + ":" + mongoPass + 
+  // "@cluster0-shard-00-00.wyaba.mongodb.net:27017,cluster0-shard-00-01.wyaba.mongodb.net:27017,cluster0-shard-00-02.wyaba.mongodb.net:27017/"
+  // + mongoDbName + "?ssl=true&replicaSet=atlas-z7hlz2-shard-0&authSource=admin&retryWrites=true&w=majority";
                  
 }
 
-console.log("Connecting to: " + mongoConnStr);
+console.log("[MClient] Loading - using database URL: " + mongoConnStr);
 
 const client = new MongoClient(mongoConnStr, {
   useNewUrlParser: true,
@@ -37,16 +36,21 @@ const createConn = async () => {
 const checkConn = async () => {
   if (!client.isConnected()) {
     // Cold start or connection timed out. Create new connection.
+    console.log("[MClient] Creating a new connection");
     try {
         await createConn();
     } catch (e) {
       return Promise.reject();
     }
   }
+  else {
+    console.log("[MClient] Using existing client connection");
+  }
   return Promise.resolve();
 }
 
 module.exports.closeConn = function()  {
+  console.log("[MClient] Closing connection")
   if(client.isConnected()) {
     client.close();
   }
