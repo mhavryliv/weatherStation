@@ -1,7 +1,11 @@
 'use strict';
 
 const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
-const mdb = require('./mclient.js');
+let mdb;
+if(!mdb) {
+  console.log("mdb object not initialised");
+  mdb = require('./mclient.js');
+}
 // for testing, expose the mdb
 module.exports.mdb = mdb;
 

@@ -26,6 +26,7 @@ function getMostRecentHalfHourIndex(events) {
       roundedTime.setMinutes(0);
       roundedTime.setHours(roundedTime.getHours() + 1)
     }
+    // downgrade the rounded time object to 
     // console.log(dateTime + " becomes " + roundedTime);
     // console.log(roundedTime);
     if(!roundedTimeMap[roundedTime]) {
@@ -39,16 +40,23 @@ function getMostRecentHalfHourIndex(events) {
         roundedTimeMap[roundedTime] = i;
       }
     }
-
   }
 
+  // Convert the map of rounded times to event indices, to rounded times to
+  // the actual events
   const roundedTimes = Object.keys(roundedTimeMap);
+  const timestampEventMap = {};
   for(var i = 0; i < roundedTimes.length; ++i) {
-    console.log(roundedTimes[i])
-    console.log(new Date(events[roundedTimeMap[roundedTimes[i]]].time))
+    const time = new Date(roundedTimes[i]);
+    const event = JSON.parse(JSON.stringify(events[roundedTimeMap[time]]));
+    delete roundedTimeMap[time];
+    roundedTimeMap[time.getTime()] = event;
+    event.roundedTime = time.getTime();
+    console.log("Time: " + new Date(time.getTime()))
+    console.log(new Date(event.roundedTime));
   }
 
-  return -1;
+  return roundedTimeMap;
 }
 
 module.exports.getMostRecentHalfHourIndex = getMostRecentHalfHourIndex;
