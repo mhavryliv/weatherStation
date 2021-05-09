@@ -26,7 +26,7 @@ void setup() {
   frameRate(30);
   pixelDensity(displayDensity());
   
-  plainFont = createFont("BrandonGrotesque-Light", 64);
+  plainFont = createFont("BrandonGrotesque-Light", 96);
   textFont(plainFont);
   
   destination = createImage(width, height, ARGB);
@@ -81,10 +81,10 @@ void drawWeatherInfoText() {
   
   fill(255);
   textAlign(CENTER);
-  textSize(32);
-  text(tempStr, width/2, height/3 - 60);
-  text(humStr, width/2, height/3);
-  text(windStr,width/2, height/3 + 60);
+  textSize(48);
+  text(tempStr, width/2, height/2 - 90);
+  text(humStr, width/2, height/2);
+  text(windStr,width/2, height/2 + 90);
 }
 
 void drawTimeText() {
@@ -92,7 +92,7 @@ void drawTimeText() {
   
   fill(255);
   textAlign(LEFT);
-  textSize(32);
+  textSize(42);
   text(timeStr, width - 140, 40);
 }
 

@@ -19,7 +19,12 @@ const data = JSON.parse(fs.readFileSync(dataPath));
 const shortData = data.slice(-50);
 
 async function getHalfHourly() {
-  let index = sortHandler.getMostRecentHalfHourIndex(shortData);
+  let halfHourlyEvents = sortHandler.getRoundedHalfHourlyEvents(shortData);
+  // in the test data set, the final event is 11:16 and rounds up to create
+  // a rounded time of 11:30. Need to make sure if displaying data that 
+  // we don't show 11:16 as 11:30 if the real time is not yet 11:30...
+  // Maybe just a rule that the last event displays the actual time, not the 
+  // rounded time.
 }
 
 getHalfHourly();

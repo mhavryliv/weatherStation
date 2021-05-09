@@ -4,7 +4,7 @@ function getNthEvent(events, index) {
 
 module.exports.getNthEvent = getNthEvent;
 
-function getMostRecentHalfHourIndex(events) {
+function getRoundedHalfHourlyEvents(events) {
   // add 10 hours to get into my timezone for debugging
   // const offset = 1000 * 60 * 60 * 10;
   // start from the end of the data, and look for either 0 or 30 min
@@ -49,14 +49,15 @@ function getMostRecentHalfHourIndex(events) {
   for(var i = 0; i < roundedTimes.length; ++i) {
     const time = new Date(roundedTimes[i]);
     const event = JSON.parse(JSON.stringify(events[roundedTimeMap[time]]));
+    event.eventIndex = roundedTimeMap[time];
+    event.roundedTime = time.getTime();
     delete roundedTimeMap[time];
     roundedTimeMap[time.getTime()] = event;
-    event.roundedTime = time.getTime();
-    console.log("Time: " + new Date(time.getTime()))
-    console.log(new Date(event.roundedTime));
+    console.log(new Date(time))
+    console.log(new Date(event.time));
   }
 
   return roundedTimeMap;
 }
 
-module.exports.getMostRecentHalfHourIndex = getMostRecentHalfHourIndex;
+module.exports.getRoundedHalfHourlyEvents = getRoundedHalfHourlyEvents;
