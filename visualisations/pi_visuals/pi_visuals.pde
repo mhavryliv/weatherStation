@@ -21,8 +21,8 @@ PFont plainFont;
 
 void setup() {
   //size(800, 480, P2D);
-  //fullScreen();
-  size(800, 480, P3D);
+  fullScreen();
+  //size(800, 480, P3D);
   frameRate(30);
   pixelDensity(displayDensity());
   
@@ -122,7 +122,7 @@ void updateHistoricalData() {
 }
 
 void mouseClicked() {
-  if(mouseX < 50 && mouseY > 438) {
+  if(mouseX < 50 && mouseY > (height - 52)) {
     exit();
   }
   else {
