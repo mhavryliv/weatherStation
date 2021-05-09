@@ -47,13 +47,16 @@ void draw () {
   background(0);
   if(UIState == 0) {
     drawAnimatedWeather();
+    drawQuitButton();
   }
   else if(UIState == 1) {
     drawVideo(true);
     drawAnimatedWeather();
+    drawQuitButton();
   }
   else if(UIState == 2) {
     drawVideo(false);
+    drawQuitButton();
   }
   else if(UIState == 3) {
     drawQuitButton();
@@ -62,7 +65,15 @@ void draw () {
 }
 
 void drawQuitButton() {
+  stroke(255);
+  //fill(0);
+  //rect(0, height - 40, 60, 40);
+  //fill(50, 50, 50);
+  //rect(0, height - 40, 60, 40);
+  textAlign(LEFT);
+  textSize(36);
   fill(255);
+  text("Quit", 6, height-16);
 }
 
 void drawVideo(boolean withOverlay) {
@@ -73,6 +84,7 @@ void drawVideo(boolean withOverlay) {
     rect(0, 0, width, height);
   }
 }
+
 
 void drawWeatherInfoText() {
   String tempStr = "Temperature: " + nf(lastTemp, 0, 1);
@@ -93,7 +105,7 @@ void drawTimeText() {
   fill(255);
   textAlign(LEFT);
   textSize(42);
-  text(timeStr, width - 140, 40);
+  text(timeStr, width - 180, 40);
 }
 
 void drawAnimatedWeather() {
@@ -110,7 +122,12 @@ void updateHistoricalData() {
 }
 
 void mouseClicked() {
-  UIState = (UIState + 1) % TotalUIStates;
+  if(mouseX < 50 && mouseY > 438) {
+    exit();
+  }
+  else {
+    UIState = (UIState + 1) % TotalUIStates;
+  }
 }
 
 
