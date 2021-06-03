@@ -18,6 +18,7 @@ PImage destination;
 long numLoops = 0;
 PFont plainFont;
 
+boolean doReInit = false;
 
 void setup() {
   //size(800, 480, P2D);
@@ -36,33 +37,45 @@ void setup() {
   // artifacts due to the fact that the particles are semi-transparent
   // but not z-sorted.
 //  hint(DISABLE_DEPTH_MASK);
-  winfo = new WInfo();
-  thread("updateHistoricalData");
-  wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
   
   video = new VLCJVideo(this);
-  video.openAndPlay("http://babypi.local/hls/index.m3u8");
+  init();
+  thread("updateHistoricalData");
 } 
+
+void init() {
+  winfo = new WInfo();
+  wsc = new WebsocketClient(this, "ws://realtimeweather-molly1.flyingaspidistra.net:8123");
+  video.openAndPlay("http://babypi.local/hls/index.m3u8");
+}
 
 void draw () {
   background(0);
   if(UIState == 0) {
     drawAnimatedWeather();
     drawQuitButton();
+    drawResetButton();
   }
   else if(UIState == 1) {
     drawVideo(true);
     drawAnimatedWeather();
     drawQuitButton();
+    drawResetButton();
   }
   else if(UIState == 2) {
     drawVideo(false);
     drawQuitButton();
+    drawResetButton();
   }
   else if(UIState == 3) {
     drawQuitButton();
+    drawResetButton();
   }
- 
+  
+  if(doReInit) {
+    init();
+    doReInit = false;
+  }
 }
 
 void drawQuitButton() {
@@ -74,7 +87,19 @@ void drawQuitButton() {
   textAlign(LEFT);
   textSize(36);
   fill(255);
-  text("Quit", 6, height-16);
+  text("Quit", width-90, height-26);
+}
+
+void drawResetButton() {
+  stroke(255);
+  //fill(0);
+  //rect(0, height - 40, 60, 40);
+  //fill(50, 50, 50);
+  //rect(0, height - 40, 60, 40);
+  textAlign(LEFT);
+  textSize(36);
+  fill(255);
+  text("Reset", 6, height-26);
 }
 
 void drawVideo(boolean withOverlay) {
@@ -124,6 +149,9 @@ void updateHistoricalData() {
 
 void mouseClicked() {
   if(mouseX < 70 && mouseY > (height - 100)) {
+    doReInit = true;
+  }
+  else if(mouseX > (width-120) && mouseY > (height - 100)) {
     exit();
   }
   else {
