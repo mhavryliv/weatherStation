@@ -11,17 +11,17 @@
       />
     </div>    
     <div v-show=!currentWeather.loading class="current_weather_display">
+      <div id="currentTime">{{currentTime}}</div>
       <div id="windandcurtemp" :class="$mq">
         <div id="windandcurtempatmos">
           <h2>Temperature: {{currentWeather.temperature}} °C</h2>
           <h2>Humidity: {{currentWeather.humidity}}%</h2>
-          <h2>Wind speed: {{liveWindSpeed}} km/h</h2>
-          <h2>Wind direction: {{liveWindDir}} </h2>
+          <h2>Wind: {{liveWindSpeed}}</h2>
         </div>
 
       </div>
 
-      <div>{{currentDate}}</div>
+
 
     </div>
 
@@ -38,7 +38,6 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 import LineChart from './LineChart.js'
 
 var self;
-var theGauge;
 var ws;
 
 export default {
@@ -69,6 +68,7 @@ export default {
       temperatureCollection: {},
       windCollection: {},
       waterCollection: {},
+      currentTime: '',
     }
   },
   computed: {
@@ -140,6 +140,14 @@ export default {
     }
   },
   methods: {
+    setCurrentTime() {
+      const now = new Date();
+      const hours = (now.getHours() + '').padStart(2, '0');
+      const minutes = (now.getMinutes() + '').padStart(2, '0');
+      const seconds = (now.getSeconds() + '').padStart(2, '0');
+      const ret = `${hours}:${minutes}:${seconds}`;
+      this.currentTime = ret;
+    },
     async reloadHistoricData(isReloading) {
       if(this.historicData.loading) {
         console.log("Already loading data");
@@ -528,6 +536,7 @@ export default {
   mounted() {
     self = this;
     this.reloadSelf(false);
+    setInterval(self.setCurrentTime, 1000);
     
     // theGauge.data([0, 30]);
     if(ws) {
@@ -544,7 +553,7 @@ export default {
         let windDir = data.wdir;
         windDir = self.windNumberFromDir(windDir);
         const windSpeed = data.wspeed;
-        self.liveWindSpeed = self.round(windSpeed, 2);
+        self.liveWindSpeed = self.round(windSpeed, 2) + ` km/h (${data.wdir})`;
         self.liveWindDir = data.wdir;
       }
     }
@@ -557,18 +566,21 @@ export default {
 </script>
 
 <style lang="scss">
-.current_weather_display {
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  width: 100%;
-  align-items: center;
-  
+.simple_main {
+  background: black;
+  color: whitesmoke;
+
+  font-weight: 200;
+  height: 100vh;
+  font-size: 1.3em;
+}
+.current_weather_display {  
   .atmos {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     margin: 10px 0 0px 0;
+    // width: 100vw;
     .item {
       margin: 0 20px 0 0px;
       display: flex;
@@ -582,48 +594,29 @@ export default {
   }
 }
 
-.weather_table{
-  width: 100%;
-  table  {
-    width: 100%;
-  }
-  
-  td {
-    padding-left: 5px;
-    text-align: left;
-  }
-  th {
-    padding-left: 5px;
-    text-align: left;
-  }
-
-}
-
-.small {
-  max-width: 600px;
-  margin: auto;
-  // display: flex;
-  // flex-direction: column;
-  // align-content: center;;
-  // margin:  150px auto;
-}
-
 #container {
   height: 350px;
   min-width: 350px;
 }
 
+#currentTime {
+  width: 100%;
+  text-align: right;
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5em;
+}
+
 #windandcurtemp {
-  display: flex;
-  width: 80%;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  text-align: left;
-  &.sm {
-    display: block;
-    width: 100%;
-    text-align: center;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  h2 {
+    font-weight: 200;
+    font-size: 1.75em;
   }
+  text-align: center;
 }
 </style>

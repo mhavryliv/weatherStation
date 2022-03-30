@@ -820,7 +820,6 @@ export default {
 
 #windandcurtemp {
   display: flex;
-  width: 80%;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
